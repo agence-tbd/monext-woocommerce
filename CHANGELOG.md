@@ -2,6 +2,10 @@ Changelog
 -------
 
 ---
+* 1.4.1 - 2021/03/11
+  * Add configuration to choose the status for Payline payed order
+
+---
 * 1.4 - 2021/01/29
   * Add widget integration
   * Add NX and REC payment methods

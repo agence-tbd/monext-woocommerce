@@ -259,6 +259,19 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /**
      * @param WC_Order $order
      * @param array $res
+     * @return mixed
+     */
+    protected function paylineSetOrderPayed(WC_Order $order) {
+        $finalStatus = $this->settings['payed_order_status'];
+        if( $finalStatus=='completed' ) {
+            $order->update_status('completed', 'Payment validated');
+        }
+    }
+
+
+    /**
+     * @param WC_Order $order
+     * @param array $res
      * @return false
      */
     protected function paylineCancelWebPaymentDetails(WC_Order $order, array $res) {
@@ -427,6 +440,18 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             ),
             'description' => __('Type of transaction created after a payment', 'payline')
         );
+
+        $this->form_fields['payed_order_status'] = array(
+            'title' => __( 'Payed order status', 'payline' ),
+            'type' => 'select',
+            'default' => 'default',
+            'options' => array(
+                'default' => __( 'Default Woocommerce status (processing)', 'payline' ),
+                'completed' => __( 'Completed', 'payline' )
+            ),
+            'description' => __( 'Choose the status of payed order', 'payline' )
+        );
+
         $this->form_fields['widget_integration'] = array(
             'title' => __( 'Widget integration mode', 'payline' ),
             'type' => 'select',
@@ -439,6 +464,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             ),
             'description' => __( 'Integration mode of the payment widget in the shop. Contact payline support for more details', 'payline' )
         );
+
         $this->form_fields['custom_page_code'] = array(
             'title' => __('Custom page code', 'payline'),
             'type' => 'text',
@@ -889,6 +915,7 @@ cancelPaylinePayment = function ()
             do_action( $this->id . '_payment_callback', $res, $order );
 
             if($this->paylineSuccessWebPaymentDetails($order, $res)) {
+                $this->paylineSetOrderPayed($order);
                 wp_redirect($this->get_return_url($order));
                 die();
             } elseif ($res['result']['code'] == '04003') {

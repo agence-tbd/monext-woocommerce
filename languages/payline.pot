@@ -427,3 +427,17 @@ msgstr ""
 #: class-wc-abstract-payline.php:524
 msgid "Your settings is correct, connexion with Payline is established"
 msgstr ""
+
+
+msgid "Payed order status"
+msgstr ""
+
+msgid "Default Woocommerce status (processing)"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+
+msgid "Choose the status of payed order"
+msgstr ""
