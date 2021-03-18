@@ -4,6 +4,8 @@ Changelog
 ---
 * 1.4.1 - 2021/03/11
   * Add configuration to choose the status for Payline payed order
+  * Fix substring special utf8 character
+  * Fix on critical using monolog on SDK error 
 
 ---
 * 1.4 - 2021/01/29

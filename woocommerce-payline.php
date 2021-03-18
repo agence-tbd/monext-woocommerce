@@ -3,7 +3,7 @@
  * Plugin Name: Payline
  * Plugin URI: https://docs.payline.com/display/DT/Plugin+WooCommerce
  * Description: integrations of Payline payment solution in your WooCommerce store
- * Version: 1.4
+ * Version: 1.4.1
  * Author: Monext
  * Author URI: http://www.monext.fr
  * License: LGPL-3.0+
