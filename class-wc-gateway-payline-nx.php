@@ -29,7 +29,7 @@ class WC_Gateway_Payline_NX extends WC_Abstract_Recurring_Payline_NX {
         $this->form_fields['billing_left'] = array(
             'title' => __('Billing left', 'payline'),
             'default' => '3',
-            'type' => 'text',
+            'type' => 'int',
             'description' => __('Recurring billing number. Mandatory field', 'payline')
         );
     }

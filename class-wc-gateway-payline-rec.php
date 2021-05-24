@@ -54,7 +54,7 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
         $this->form_fields['max_records'] = array(
             'title' => __('Maximum records', 'payline'),
             'default' => '12',
-            'type' => 'text',
+            'type' => 'int',
             'description' => __('Set a number maximum of records or leave empty', 'payline')
         );
 

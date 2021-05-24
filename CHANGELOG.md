@@ -2,6 +2,12 @@ Changelog
 -------
 
 ---
+* 1.4.1 - 2021/05/24
+  * Compliance with Payline PHP SDK 4.64.1
+  * Fix warning on PHP Deprecated:  WC_Shortcode_Checkout->output
+  * Set API version to 21
+  
+---
 * 1.4 - 2021/01/29
   * Add widget integration
   * Add NX and REC payment methods
