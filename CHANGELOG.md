@@ -2,11 +2,17 @@ Changelog
 -------
 
 ---
-* 1.4.1 - 2021/05/24
+* 1.4.2 - 2021/05/24
   * Compliance with Payline PHP SDK 4.64.1
   * Fix warning on PHP Deprecated:  WC_Shortcode_Checkout->output
   * Set API version to 21
   
+---
+* 1.4.1 - 2021/03/11
+  * Add configuration to choose the status for Payline payed order
+  * Fix substring special utf8 character
+  * Fix on critical using monolog on SDK error 
+
 ---
 * 1.4 - 2021/01/29
   * Add widget integration

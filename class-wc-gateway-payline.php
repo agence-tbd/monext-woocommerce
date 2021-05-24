@@ -58,10 +58,8 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
             update_post_meta((int) $orderId, 'Card number', $res['card']['number']);
             update_post_meta((int) $orderId, 'Payment mean', $res['card']['type']);
             update_post_meta((int) $orderId, 'Card expiry', $res['card']['expirationDate']);
-
             update_post_meta((int) $orderId, '_contract_number', $res['payment']['contractNumber']);
             $order->payment_complete($res['transaction']['id']);
-            $order->update_status('completed', 'Payment validated');
             return true;
         }
         return false;

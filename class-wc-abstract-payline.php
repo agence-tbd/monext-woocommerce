@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Logger;
 use Payline\PaylineSDK;
 
 
@@ -15,7 +16,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.4.1';
+    protected $extensionVersion = '1.4.2';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 21;
@@ -234,18 +235,13 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $this->title = $this->settings['title'];
         $this->description = $this->settings['description'];
         $this->testmode = (isset($this->settings['ctx_mode']) && $this->settings['ctx_mode'] === 'TEST');
-        $this->debug = (isset($this->settings['debug']) && $this->settings['debug'] == 'yes') ? true : false;
+        $this->debugEnable = (isset($this->settings['debug']) && $this->settings['debug'] == 'yes') ? true : false;
 
         // The module settings page URL
         $link = add_query_arg('page', 'wc-settings', admin_url('admin.php'));
         $link = add_query_arg('tab', 'checkout', $link);
         $link = add_query_arg('section', 'payline', $link);
         $this->admin_link = $link;
-
-        // logger
-        if ($this->debug) {
-            $this->log = new WC_Logger();
-        }
 
         // Actions
         $this->add_payline_common_actions();
@@ -262,6 +258,19 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /**
      * @param WC_Order $order
      * @param array $res
+     * @return mixed
+     */
+    protected function paylineSetOrderPayed(WC_Order $order) {
+        $finalStatus = $this->settings['payed_order_status'];
+        if( $finalStatus=='completed' ) {
+            $order->update_status('completed', 'Payment validated');
+        }
+    }
+
+
+    /**
+     * @param WC_Order $order
+     * @param array $res
      * @return false
      */
     protected function paylineCancelWebPaymentDetails(WC_Order $order, array $res) {
@@ -274,8 +283,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
      * @param array $context
      */
     protected function debug($content, $context=array()) {
-        if ($this->debug) {
+        if ($this->debugEnable) {
             $logger = wc_get_logger();
+            //TODO: Merge log
+            //$logger = $this->getSDK()->getLogger();
             $messages = array();
             $messages[] = $_SERVER['REQUEST_URI'];
             $messages[] = get_class($this);
@@ -430,6 +441,18 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             ),
             'description' => __('Type of transaction created after a payment', 'payline')
         );
+
+        $this->form_fields['payed_order_status'] = array(
+            'title' => __( 'Payed order status', 'payline' ),
+            'type' => 'select',
+            'default' => 'default',
+            'options' => array(
+                'default' => __( 'Default Woocommerce status (processing)', 'payline' ),
+                'completed' => __( 'Completed', 'payline' )
+            ),
+            'description' => __( 'Choose the status of payed order', 'payline' )
+        );
+
         $this->form_fields['widget_integration'] = array(
             'title' => __( 'Widget integration mode', 'payline' ),
             'type' => 'select',
@@ -442,6 +465,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             ),
             'description' => __( 'Integration mode of the payment widget in the shop. Contact payline support for more details', 'payline' )
         );
+
         $this->form_fields['custom_page_code'] = array(
             'title' => __('Custom page code', 'payline'),
             'type' => 'text',
@@ -631,7 +655,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $this->settings['proxy_port'],
             $this->settings['proxy_login'],
             $this->settings['proxy_password'],
-            $this->settings['environment']
+            $this->settings['environment'],
+            wc_get_log_file_path('payline'),
+            ($this->debugEnable) ? Logger::DEBUG : Logger::INFO
         );
         $SDK->usedBy($usedBy);
 
@@ -641,6 +667,18 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected function getTokenForOrder(WC_Order $order) {
         return 'plnTokenForOrder_' . $order->get_id();
+    }
+
+
+    protected function cleanSubstr($string, $offset, $length = null)
+    {
+        $cleanString = str_replace(array("\r", "\n", "\t"), array('', '', ''), $string);
+
+        if (extension_loaded('mbstring')) {
+            return mb_substr($cleanString, $offset, $length, 'UTF-8');
+        }
+
+        return substr($cleanString, $offset, $length);
     }
 
     /**
@@ -659,7 +697,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
         // ORDER
 
-        $doWebPaymentRequest['order']['ref'] = substr($order->get_id(), 0, 50);
+        $doWebPaymentRequest['order']['ref'] = $this->cleanSubstr($order->get_id(), 0, 50);
         $doWebPaymentRequest['order']['country'] = $order->get_billing_country();
         $doWebPaymentRequest['order']['taxes'] = round($order->get_total_tax());
         $doWebPaymentRequest['order']['amount'] = $doWebPaymentRequest['payment']['amount'];
@@ -668,40 +706,40 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
         // BUYER
         $doWebPaymentRequest['buyer']['title'] = 'M';
-        $doWebPaymentRequest['buyer']['lastName'] = substr($order->get_billing_last_name(), 0, 100);
-        $doWebPaymentRequest['buyer']['firstName'] = substr($order->get_billing_first_name(), 0, 100);
-        $doWebPaymentRequest['buyer']['customerId'] = substr($order->get_billing_email(), 0, 50);
-        $doWebPaymentRequest['buyer']['email'] = substr($order->get_billing_email(), 0, 150);
+        $doWebPaymentRequest['buyer']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
+        $doWebPaymentRequest['buyer']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
+        $doWebPaymentRequest['buyer']['customerId'] = $this->cleanSubstr($order->get_billing_email(), 0, 50);
+        $doWebPaymentRequest['buyer']['email'] = $this->cleanSubstr($order->get_billing_email(), 0, 150);
         $doWebPaymentRequest['buyer']['ip'] = $_SERVER['REMOTE_ADDR'];
-        $doWebPaymentRequest['buyer']['mobilePhone'] = substr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
+        $doWebPaymentRequest['buyer']['mobilePhone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
 
         // BILLING ADDRESS
         $doWebPaymentRequest['billingAddress']['name'] = $order->get_billing_first_name() . " " . $order->get_billing_last_name();
         if ($order->get_billing_company() != null && strlen($order->get_billing_company()) > 0) {
             $doWebPaymentRequest['billingAddress']['name'] .= ' (' . $order->get_billing_company() . ')';
         }
-        $doWebPaymentRequest['billingAddress']['name'] = substr($doWebPaymentRequest['billingAddress']['name'], 0, 100);
-        $doWebPaymentRequest['billingAddress']['firstName'] = substr($order->get_billing_first_name(), 0, 100);
-        $doWebPaymentRequest['billingAddress']['lastName'] = substr($order->get_billing_last_name(), 0, 100);
-        $doWebPaymentRequest['billingAddress']['street1'] = substr($order->get_billing_address_1(), 0, 100);
-        $doWebPaymentRequest['billingAddress']['street2'] = substr($order->get_billing_address_2(), 0, 100);
-        $doWebPaymentRequest['billingAddress']['cityName'] = substr($order->get_billing_city(), 0, 40);
-        $doWebPaymentRequest['billingAddress']['zipCode'] = substr($order->get_billing_postcode(), 0, 20);
+        $doWebPaymentRequest['billingAddress']['name'] = $this->cleanSubstr($doWebPaymentRequest['billingAddress']['name'], 0, 100);
+        $doWebPaymentRequest['billingAddress']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
+        $doWebPaymentRequest['billingAddress']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
+        $doWebPaymentRequest['billingAddress']['street1'] = $this->cleanSubstr($order->get_billing_address_1(), 0, 100);
+        $doWebPaymentRequest['billingAddress']['street2'] = $this->cleanSubstr($order->get_billing_address_2(), 0, 100);
+        $doWebPaymentRequest['billingAddress']['cityName'] = $this->cleanSubstr($order->get_billing_city(), 0, 40);
+        $doWebPaymentRequest['billingAddress']['zipCode'] = $this->cleanSubstr($order->get_billing_postcode(), 0, 20);
         $doWebPaymentRequest['billingAddress']['country'] = $order->get_billing_country();
-        $doWebPaymentRequest['billingAddress']['phone'] = substr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
+        $doWebPaymentRequest['billingAddress']['phone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
 
         // SHIPPING ADDRESS
         $doWebPaymentRequest['shippingAddress']['name'] = $order->get_shipping_first_name() . " " . $order->get_shipping_last_name();
         if ($order->get_shipping_company() != null && strlen($order->get_shipping_company()) > 0) {
             $doWebPaymentRequest['shippingAddress']['name'] .= ' (' . $order->get_shipping_company() . ')';
         }
-        $doWebPaymentRequest['shippingAddress']['name'] = substr($doWebPaymentRequest['shippingAddress']['name'], 0, 100);
-        $doWebPaymentRequest['shippingAddress']['firstName'] = substr($order->get_shipping_first_name(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['lastName'] = substr($order->get_shipping_last_name(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['street1'] = substr($order->get_shipping_address_1(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['street2'] = substr($order->get_shipping_address_2(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['cityName'] = substr($order->get_shipping_city(), 0, 40);
-        $doWebPaymentRequest['shippingAddress']['zipCode'] = substr($order->get_shipping_postcode(), 0, 20);
+        $doWebPaymentRequest['shippingAddress']['name'] = $this->cleanSubstr($doWebPaymentRequest['shippingAddress']['name'], 0, 100);
+        $doWebPaymentRequest['shippingAddress']['firstName'] = $this->cleanSubstr($order->get_shipping_first_name(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['lastName'] = $this->cleanSubstr($order->get_shipping_last_name(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['street1'] = $this->cleanSubstr($order->get_shipping_address_1(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['street2'] = $this->cleanSubstr($order->get_shipping_address_2(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['cityName'] = $this->cleanSubstr($order->get_shipping_city(), 0, 40);
+        $doWebPaymentRequest['shippingAddress']['zipCode'] = $this->cleanSubstr($order->get_shipping_postcode(), 0, 20);
         $doWebPaymentRequest['shippingAddress']['country'] = $order->get_shipping_country();
         $doWebPaymentRequest['shippingAddress']['phone'] = '';
 
@@ -709,7 +747,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $items = $order->get_items();
         foreach ($items as $item) {
             $this->SDK->addOrderDetail(array(
-                'ref' => substr(str_replace(array("\r", "\n", "\t"), array('', '', ''), $item['name']), 0, 50),
+                'ref' => $this->cleanSubstr($item['name'], 0, 50),
                 'price' => round($item['line_total'] * 100),
                 'quantity' => $item['qty'],
                 'comment' => ''
@@ -878,21 +916,23 @@ cancelPaylinePayment = function ()
         $this->debug($res, array(__METHOD__));
 
         if($res['result']['code'] == PaylineSDK::ERR_CODE) {
-            $this->SDK->getLogger()->addError('Unable to call Payline for token '.$token);
-            exit;
+            $this->SDK->getLogger()->error('Unable to call Payline for token '.$token);
+            wp_redirect(wc_get_cart_url());
+            die();
         } else {
             $orderId = $res['order']['ref'];
             $order = wc_get_order($orderId);
             $expectedToken = get_option($this->getTokenForOrder($order));
             if($expectedToken != $token){
                 $message = sprintf(__('Token %s does not match expected %s for order %s', 'payline'), wc_clean($token), $expectedToken, $orderId);
-                $this->SDK->getLogger()->addError($message);
+                $this->SDK->getLogger()->error($message);
                 $order->add_order_note($message);
                 die($message);
             }
             do_action( $this->id . '_payment_callback', $res, $order );
 
             if($this->paylineSuccessWebPaymentDetails($order, $res)) {
+                $this->paylineSetOrderPayed($order);
                 wp_redirect($this->get_return_url($order));
                 die();
             } elseif ($res['result']['code'] == '04003') {
