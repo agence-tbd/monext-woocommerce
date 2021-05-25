@@ -169,3 +169,23 @@ function payline_site_transient_update_plugins( $value) {
 add_filter( 'site_transient_update_plugins', 'payline_site_transient_update_plugins' );
 
 
+/**
+ * @param $should_update
+ * @param $plugin
+ * @return false
+ */
+function payline_auto_update_plugin( $should_update, $plugin ) {
+    if ( ! isset( $plugin->plugin, $plugin->new_version ) ) {
+        return $should_update;
+    }
+
+    if ( basename(dirname(__FILE__)) . DIRECTORY_SEPARATOR . basename(__FILE__) == $plugin->plugin ) {
+        return false;
+    }
+    return $should_update;
+
+}
+add_filter( 'auto_update_plugin', 'payline_auto_update_plugin', 100, 2 );
+
+
+
