@@ -894,6 +894,20 @@ cancelPaylinePayment = function ()
 
     function payline_callback() {
 
+        if(isset($_GET['url_type']) && $_GET['url_type']=='cancel'){
+            $noticeMessage = __( 'Payment was canceled.', 'payline' );
+            wc_add_notice( $noticeMessage , 'error' );
+            $errorCartUrl = add_query_arg(
+                array('payline_cancel'=>1
+                ),
+                wc_get_cart_url()
+            );
+
+            wp_redirect($errorCartUrl);
+            die();
+        }
+
+
         if(isset($_GET['order_id'])){
             $this->generate_payline_form($_GET['order_id']);
             exit;

@@ -7,6 +7,7 @@ Changelog
   * Fix warning on PHP Deprecated:  WC_Shortcode_Checkout->output
   * Set API version to 21
   * Filter auto update to avoid install BitPay
+  * Add param payline_cancel in cancel URL
   
 ---
 * 1.4.1 - 2021/03/11
