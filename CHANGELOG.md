@@ -6,6 +6,7 @@ Changelog
   * Compliance with Payline PHP SDK 4.64.1
   * Fix warning on PHP Deprecated:  WC_Shortcode_Checkout->output
   * Set API version to 21
+  * Filter auto update to avoid install BitPay
   
 ---
 * 1.4.1 - 2021/03/11
