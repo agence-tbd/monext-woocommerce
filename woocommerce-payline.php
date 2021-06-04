@@ -3,8 +3,9 @@
  * Plugin Name: Payline
  * Plugin URI: https://docs.payline.com/display/DT/Plugin+WooCommerce
  * Description: integrations of Payline payment solution in your WooCommerce store
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: Monext
+ * Text Domain: monext-online-woocommerce
  * Author URI: http://www.monext.fr
  * License: LGPL-3.0+
  * GitHub Plugin URI: https://github.com/PaylineByMonext/payline-woocommerce/
@@ -139,3 +140,52 @@ function woocommerce_payline_enable_gateway_order_pay( $available_gateways ) {
 }
 
 add_filter( 'woocommerce_available_payment_gateways', 'woocommerce_payline_enable_gateway_order_pay' );
+
+/**
+ * Payline module is not published on https://wordpress.org/plugins/
+ * avoid confusing with bitpay
+ *
+ * @param $value
+ * @return mixed
+ */
+function payline_site_transient_update_plugins( $value) {
+
+    if(basename(dirname(__FILE__)) != 'payline-woocommerce') {
+        return $value;
+    }
+
+    if(empty($value) || empty($value->response) || !is_array($value->response)) {
+        return $value;
+    }
+
+    foreach ($value->response as $pluginFile => $pluginUpdate) {
+        if($pluginUpdate->plugin == "payline-woocommerce/woocommerce-payline.php") {
+            unset($value->response[$pluginFile]);
+        }
+    }
+
+    return $value;
+}
+add_filter( 'site_transient_update_plugins', 'payline_site_transient_update_plugins' );
+
+
+/**
+ * @param $should_update
+ * @param $plugin
+ * @return false
+ */
+function payline_auto_update_plugin( $should_update, $plugin ) {
+    if ( ! isset( $plugin->plugin, $plugin->new_version ) ) {
+        return $should_update;
+    }
+
+    if ( basename(dirname(__FILE__)) . DIRECTORY_SEPARATOR . basename(__FILE__) == $plugin->plugin ) {
+        return false;
+    }
+    return $should_update;
+
+}
+add_filter( 'auto_update_plugin', 'payline_auto_update_plugin', 100, 2 );
+
+
+

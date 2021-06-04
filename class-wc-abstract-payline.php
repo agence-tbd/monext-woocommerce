@@ -16,7 +16,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.4.1';
+    protected $extensionVersion = '1.4.2';
+
+    /** @var int Payline internal API version */
+    protected $APIVersion = 21;
 
     protected $callGetMerchantSettings = true;
 
@@ -626,7 +629,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $order = wc_get_order($order_id);
         return array(
             'result' 	=> 'success',
-            'redirect'	=> add_query_arg('order', $order->get_id(), add_query_arg('key', $order->get_order_key(), $order->get_checkout_order_received_url()/*get_permalink(woocommerce_get_page_id('pay'))*/))
+            'redirect'	=> add_query_arg('order-pay', $order->get_id(), $order->get_checkout_order_received_url()/*get_permalink(woocommerce_get_page_id('pay'))*/)
+
+
         );
     }
 
@@ -683,7 +688,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     protected function getWebPaymentRequest(WC_Order $order)
     {
         $doWebPaymentRequest = array();
-        $doWebPaymentRequest['version'] = '20';
+        $doWebPaymentRequest['version'] = $this->APIVersion;
         $doWebPaymentRequest['payment']['amount'] = round($order->get_total() * 100);
         $doWebPaymentRequest['payment']['currency'] = $this->_currencies[$order->get_currency()];
         $doWebPaymentRequest['payment']['action'] = $this->settings['payment_action'];
@@ -889,16 +894,29 @@ cancelPaylinePayment = function ()
 
     function payline_callback() {
 
+        if(isset($_GET['url_type']) && $_GET['url_type']=='cancel'){
+            $noticeMessage = __( 'Payment was canceled.', 'payline' );
+            wc_add_notice( $noticeMessage , 'error' );
+            $errorCartUrl = add_query_arg(
+                array('payline_cancel'=>1
+                ),
+                wc_get_cart_url()
+            );
+
+            wp_redirect($errorCartUrl);
+            die();
+        }
+
+
         if(isset($_GET['order_id'])){
             $this->generate_payline_form($_GET['order_id']);
             exit;
         }
 
         $token = false;
-        if(!empty($_GET['token'])){
+        if (!empty($_GET['token'])) {
             $token = esc_html($_GET['token']);
-        }
-        if(!empty($_GET['paylinetoken'])){
+        } elseif (!empty($_GET['paylinetoken'])) {
             $token = esc_html($_GET['paylinetoken']);
         }
 
@@ -908,7 +926,7 @@ cancelPaylinePayment = function ()
 
         $this->SDK = $this->getSDK();
 
-        $res = $this->SDK->getWebPaymentDetails(array('token'=>$token,'version'=>'2'));
+        $res = $this->SDK->getWebPaymentDetails(array('token'=>$token,'version'=>$this->APIVersion));
         $this->debug($res, array(__METHOD__));
 
         if($res['result']['code'] == PaylineSDK::ERR_CODE) {
