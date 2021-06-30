@@ -84,12 +84,13 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
 
         $requestParams['recurring']['billingDay'] = '01'; //  [01 à 30]
 
-        //$today    = current_time( 'd/m/Y' );
-        $requestParams['recurring']['startDate'] = ''; // dd/mm/yyyy
+        $numberDaysCycle = $this->getDaysForCycles($this->settings['billing_cycle']);
 
+        //$today    = current_time( 'd/m/Y' );
+        $requestParams['recurring']['startDate'] = current_datetime()->modify( '+' .$numberDaysCycle. ' day' )->format( 'd/m/Y' );; // dd/mm/yyyy
 
         if($this->settings['billing_cycle'] && $this->settings['max_records']) {
-            $numberDaysToLastDate = $this->getDaysForCycles($this->settings['billing_cycle']) * $this->settings['max_records'];
+            $numberDaysToLastDate = $numberDaysCycle * $this->settings['max_records'];
             $requestParams['recurring']['endDate'] = current_datetime()->modify( '+' .$numberDaysToLastDate. ' day' )->format( 'd/m/Y' );;
 
         }
