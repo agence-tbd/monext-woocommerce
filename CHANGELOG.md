@@ -1,6 +1,11 @@
 Changelog
 -------
 ---
+* 1.4.4 - 2022/05/24
+  * Compliance with Payline PHP SDK 4.69
+  * Set API version to 26
+
+---
 * 1.4.3 - 2021/06/30
   * Compliance with Payline PHP SDK 4.66
   * Fix start_date on recurring payment
