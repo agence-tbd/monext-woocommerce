@@ -12,7 +12,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
-    protected $urlTypes = ['notification', 'return', 'cancel'];
+    protected $urlTypes = ['notification', 'return', 'cancel', 'webhook'];
 
     protected $paymentMode = '';
 
@@ -258,6 +258,15 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /**
      * @param WC_Order $order
      * @param array $res
+     * @return bool
+     */
+    protected function paylineOnHoldPartnerWebPaymentDetails(WC_Order $order, array $res) {
+        return !empty($res['result']['shortMessage']) && $res['result']['shortMessage'] == 'ONHOLD_PARTNER';
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param array $res
      * @return mixed
      */
     protected function paylineSetOrderPayed(WC_Order $order) {
@@ -266,6 +275,13 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $order->update_status('completed', 'Payment validated');
         }
     }
+
+    protected function paylineSetOrderOnHold(WC_Order $order) {
+        $order->update_status('on-hold', __('Payment on hold', 'payline'));
+        wc_add_notice( __( 'Payment in progress', 'payline' ), 'notice' );
+    }
+
+
 
 
     /**
@@ -711,7 +727,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
 
         // BUYER
-        $doWebPaymentRequest['buyer']['title'] = 'M';
+        // TODO: Default value
+        $doWebPaymentRequest['buyer']['title'] = '4'; //M. / Monsieur
+
         $doWebPaymentRequest['buyer']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
         $doWebPaymentRequest['buyer']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
         $doWebPaymentRequest['buyer']['customerId'] = $this->cleanSubstr($order->get_billing_email(), 0, 50);
@@ -898,19 +916,74 @@ cancelPaylinePayment = function ()
         }
     }
 
+
+    /**
+     * @return void
+     */
+    protected function payline_callback_cancel($message='') {
+
+        $noticeMessage = __( 'Payment was canceled.', 'payline' );
+        wc_add_notice( $noticeMessage , 'error' );
+        $errorCartUrl = add_query_arg(
+            array('payline_cancel'=>1
+            ),
+            wc_get_cart_url()
+        );
+
+        wp_redirect($errorCartUrl);
+        die();
+    }
+
+    /**
+     * @return void
+     */
+    protected function payline_callback_webhook() {
+
+        if(empty($_GET['transactionId'])) {
+            return false;
+        }
+
+        $this->SDK = $this->getSDK();
+        $res = $this->SDK->getTransactionDetails(array('transactionId'=> $_GET['transactionId'],
+            //'orderRef'=>$_GET['orderRef'],
+            'version'=>$this->APIVersion));
+
+        if(empty($res['order']['ref'])) {
+            return false;
+        }
+
+        $order = wc_get_order($res['order']['ref']);
+        if($this->paylineSuccessWebPaymentDetails($order, $res)) {
+            $this->paylineSetOrderPayed($order);
+            die('Success webhook');
+        }
+
+        die('Error webhook');
+    }
+
+    /**
+     *
+     * @return void
+     */
     function payline_callback() {
 
-        if(isset($_GET['url_type']) && $_GET['url_type']=='cancel'){
-            $noticeMessage = __( 'Payment was canceled.', 'payline' );
-            wc_add_notice( $noticeMessage , 'error' );
-            $errorCartUrl = add_query_arg(
-                array('payline_cancel'=>1
-                ),
-                wc_get_cart_url()
-            );
 
-            wp_redirect($errorCartUrl);
-            die();
+        $this->debug('payline_callback GET', $_GET);
+        $this->debug('payline_callback POST', $_POST);
+
+
+        if(!isset($_GET['url_type']) || !in_array($_GET['url_type'], $this->urlTypes)) {
+            $this->payline_callback_cancel('Unknow url type.');
+            return;
+        }
+
+        $urlType = $_GET['url_type'];
+        if($urlType=='cancel'){
+            $this->payline_callback_cancel('Payment was canceled.');
+        }
+
+        if($urlType=='webhook'){
+            $this->payline_callback_webhook();
         }
 
 
@@ -955,6 +1028,10 @@ cancelPaylinePayment = function ()
                 $this->paylineSetOrderPayed($order);
                 wp_redirect($this->get_return_url($order));
                 die();
+            } elseif($this->paylineOnHoldPartnerWebPaymentDetails($order, $res)) {
+                $this->paylineSetOrderOnHold($order);
+                wp_redirect($this->get_return_url($order));
+                die();
             } elseif ($res['result']['code'] == '04003') {
                 update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
                 update_post_meta((int) $orderId, 'Card number', $res['card']['number']);
@@ -963,7 +1040,7 @@ cancelPaylinePayment = function ()
                 $order->update_status('on-hold', __('Fraud alert. See details in Payline administration center', 'payline'));
                 wp_redirect($this->get_return_url($order));
                 die();
-            } elseif ($res['result']['code'] == '02306' || $res['result']['code'] == '02533'){
+            } elseif ($res['result']['code'] == '02306' || $res['result']['code'] == '02533') {
                 $order->add_order_note(__('Payment in progress', 'payline'));
                 wc_add_notice( __( 'Payment in progress', 'payline' ), 'notice' );
                 wp_redirect($this->get_return_url($order));

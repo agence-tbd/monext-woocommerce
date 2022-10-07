@@ -1,6 +1,12 @@
 Changelog
 -------
 ---
+* 1.4.5 - 2022/10/07
+  * Compliance with Payline PHP SDK 4.71
+  * Check on-hold status
+  * Compatibility with COFIDIS
+  
+---
 * 1.4.4 - 2022/05/24
   * Compliance with Payline PHP SDK 4.69
   * Set API version to 26
