@@ -966,10 +966,6 @@ cancelPaylinePayment = function ()
      * @return void
      */
     function payline_callback() {
-
-        $this->debug('payline_callback GET', $_GET);
-        $this->debug('payline_callback POST', $_POST);
-
         if(!isset($_GET['url_type']) || !in_array($_GET['url_type'], $this->urlTypes)) {
             $this->payline_callback_cancel('Unknow url type.');
             return;
