@@ -16,10 +16,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.4.3';
+    protected $extensionVersion = '1.4.4';
 
     /** @var int Payline internal API version */
-    protected $APIVersion = 21;
+    protected $APIVersion = 26;
 
     protected $callGetMerchantSettings = true;
 
@@ -644,6 +644,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         if ( ! function_exists( 'get_plugins' ) ) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
+
+        $pathLog = trailingslashit(dirname(wc_get_log_file_path('payline'))) . trailingslashit('payline');
+        if (!is_dir($pathLog)) {
+            @mkdir($pathLog, 0777, true);
+        }
+
         $woocommerceinfo = get_plugins('/woocommerce');
         $usedBy = (!empty($woocommerceinfo)) ? current($woocommerceinfo)['Name'] .' '. current($woocommerceinfo)['Version'] : 'wooComm';
         $usedBy .= ' - v'.$this->extensionVersion;
@@ -656,7 +662,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $this->settings['proxy_login'],
             $this->settings['proxy_password'],
             $this->settings['environment'],
-            wc_get_log_file_path('payline'),
+            $pathLog,
             ($this->debugEnable) ? Logger::DEBUG : Logger::INFO
         );
         $SDK->usedBy($usedBy);
@@ -820,11 +826,11 @@ cancelPaylinePayment = function ()
         $tokenOptionKey = $this->getTokenForOrder($order);
 
         if ( preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match) ) {
-            $widgetJS  =  $this->SDK::PROD_WDGT_JS;
-            $widgetCSS  =  $this->SDK::PROD_WDGT_CSS;
-            if ($this->settings['environment'] == $this->SDK::ENV_HOMO) {
-                $widgetJS  =  $this->SDK::HOMO_WDGT_JS;
-                $widgetCSS  =  $this->SDK::HOMO_WDGT_CSS;
+            $widgetJS  =  PaylineSDK::PROD_WDGT_JS;
+            $widgetCSS  =  PaylineSDK::PROD_WDGT_CSS;
+            if ($this->settings['environment'] ==PaylineSDK::ENV_HOMO) {
+                $widgetJS  =  PaylineSDK::HOMO_WDGT_JS;
+                $widgetCSS  =  PaylineSDK::HOMO_WDGT_CSS;
             }
             printf( '<script src="%s"></script>', $widgetJS);
             printf('<link href="%s" rel="stylesheet" />', $widgetCSS);
