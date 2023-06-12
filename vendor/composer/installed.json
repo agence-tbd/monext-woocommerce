@@ -1,17 +1,17 @@
 [
     {
         "name": "monext/payline-sdk",
-        "version": "4.69",
-        "version_normalized": "4.69.0.0",
+        "version": "4.71",
+        "version_normalized": "4.71.0.0",
         "source": {
             "type": "git",
             "url": "https://github.com/PaylineByMonext/payline-php-sdk.git",
-            "reference": "4b0363c63a6fa12dfb150502a232d804d41af231"
+            "reference": "537b3580458ecc2288cb292f6f54d04fff84891c"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/4b0363c63a6fa12dfb150502a232d804d41af231",
-            "reference": "4b0363c63a6fa12dfb150502a232d804d41af231",
+            "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/537b3580458ecc2288cb292f6f54d04fff84891c",
+            "reference": "537b3580458ecc2288cb292f6f54d04fff84891c",
             "shasum": ""
         },
         "require": {
@@ -23,7 +23,7 @@
             "php": ">=5.6",
             "symfony/cache": ">=3.4"
         },
-        "time": "2022-02-14T10:41:54+00:00",
+        "time": "2022-06-29T09:43:57+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {

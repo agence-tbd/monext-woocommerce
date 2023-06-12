@@ -2872,9 +2872,10 @@
                     <element name="deviceRenderOptionsUI" nillable="true" type="xsd:string"/>
                     <element name="appID" nillable="true" type="xsd:string"/>
                     <element name="ephemPubKey" nillable="true" type="xsd:string"/>
-                    <element name="maxTimeout" nillable="true" type="xsd:integer"/>
+                    <element name="maxTimeout" nillable="true" type="xsd:string"/>
                     <element name="referenceNumber" nillable="true" type="xsd:string"/>
                     <element name="transID" nillable="true" type="xsd:string"/>
+                    <element name="encData" nillable="true" type="xsd:string"/>
                 </sequence>
             </complexType>
             <complexType name="merchantAuthentication">

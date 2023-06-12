@@ -12,7 +12,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
-    protected $urlTypes = ['notification', 'return', 'cancel'];
+    protected $urlTypes = ['notification', 'return', 'cancel', 'webhook'];
 
     protected $paymentMode = '';
 
@@ -258,6 +258,15 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /**
      * @param WC_Order $order
      * @param array $res
+     * @return bool
+     */
+    protected function paylineOnHoldPartnerWebPaymentDetails(WC_Order $order, array $res) {
+        return !empty($res['result']['shortMessage']) && $res['result']['shortMessage'] == 'ONHOLD_PARTNER';
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param array $res
      * @return mixed
      */
     protected function paylineSetOrderPayed(WC_Order $order) {
@@ -266,6 +275,13 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $order->update_status('completed', 'Payment validated');
         }
     }
+
+    protected function paylineSetOrderOnHold(WC_Order $order) {
+        $order->update_status('on-hold', __('Payment on hold', 'payline'));
+        wc_add_notice( __( 'Payment in progress', 'payline' ), 'notice' );
+    }
+
+
 
 
     /**
@@ -711,7 +727,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
 
         // BUYER
-        $doWebPaymentRequest['buyer']['title'] = 'M';
+        // TODO: Default value
+        $doWebPaymentRequest['buyer']['title'] = '4'; //M. / Monsieur
+
         $doWebPaymentRequest['buyer']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
         $doWebPaymentRequest['buyer']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
         $doWebPaymentRequest['buyer']['customerId'] = $this->cleanSubstr($order->get_billing_email(), 0, 50);
@@ -898,21 +916,69 @@ cancelPaylinePayment = function ()
         }
     }
 
-    function payline_callback() {
 
-        if(isset($_GET['url_type']) && $_GET['url_type']=='cancel'){
-            $noticeMessage = __( 'Payment was canceled.', 'payline' );
-            wc_add_notice( $noticeMessage , 'error' );
-            $errorCartUrl = add_query_arg(
-                array('payline_cancel'=>1
-                ),
-                wc_get_cart_url()
-            );
+    /**
+     * @return void
+     */
+    protected function payline_callback_cancel($message='') {
 
-            wp_redirect($errorCartUrl);
-            die();
+        $noticeMessage = __( 'Payment was canceled.', 'payline' );
+        wc_add_notice( $noticeMessage , 'error' );
+        $errorCartUrl = add_query_arg(
+            array('payline_cancel'=>1
+            ),
+            wc_get_cart_url()
+        );
+
+        wp_redirect($errorCartUrl);
+        die();
+    }
+
+    /**
+     * @return void
+     */
+    protected function payline_callback_webhook() {
+
+        if(empty($_GET['transactionId'])) {
+            return false;
         }
 
+        $this->SDK = $this->getSDK();
+        $res = $this->SDK->getTransactionDetails(array('transactionId'=> $_GET['transactionId'],
+            //'orderRef'=>$_GET['orderRef'],
+            'version'=>$this->APIVersion));
+
+        if(empty($res['order']['ref'])) {
+            return false;
+        }
+
+        $order = wc_get_order($res['order']['ref']);
+        if($order && $order->get_id()) {
+            $this->paylineManageReturn($order, $res);
+            die('Success webhook');
+        }
+
+        die('Error webhook');
+    }
+
+    /**
+     *
+     * @return void
+     */
+    function payline_callback() {
+        if(!isset($_GET['url_type']) || !in_array($_GET['url_type'], $this->urlTypes)) {
+            $this->payline_callback_cancel('Unknow url type.');
+            return;
+        }
+
+        $urlType = $_GET['url_type'];
+        if($urlType=='cancel'){
+            $this->payline_callback_cancel('Payment was canceled.');
+        }
+
+        if($urlType=='webhook'){
+            $this->payline_callback_webhook();
+        }
 
         if(isset($_GET['order_id'])){
             $this->generate_payline_form($_GET['order_id']);
@@ -951,53 +1017,67 @@ cancelPaylinePayment = function ()
             }
             do_action( $this->id . '_payment_callback', $res, $order );
 
-            if($this->paylineSuccessWebPaymentDetails($order, $res)) {
-                $this->paylineSetOrderPayed($order);
-                wp_redirect($this->get_return_url($order));
-                die();
-            } elseif ($res['result']['code'] == '04003') {
-                update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
-                update_post_meta((int) $orderId, 'Card number', $res['card']['number']);
-                update_post_meta((int) $orderId, 'Payment mean', $res['card']['type']);
-                update_post_meta((int) $orderId, 'Card expiry', $res['card']['expirationDate']);
-                $order->update_status('on-hold', __('Fraud alert. See details in Payline administration center', 'payline'));
-                wp_redirect($this->get_return_url($order));
-                die();
-            } elseif ($res['result']['code'] == '02306' || $res['result']['code'] == '02533'){
-                $order->add_order_note(__('Payment in progress', 'payline'));
-                wc_add_notice( __( 'Payment in progress', 'payline' ), 'notice' );
-                wp_redirect($this->get_return_url($order));
-                die();
+            $message = $this->paylineManageReturn($order, $res);
+
+            $redirectUrl = $this->get_return_url($order);
+            if(in_array($order->get_status(), array('failed', 'cancelled'))) {
+                $redirectUrl = $this->get_error_payment_url($order, $message);
+            }
+
+            wp_redirect($redirectUrl);
+            die();
+        }
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param array $res
+     * @return void
+     */
+    protected function paylineManageReturn(WC_Order $order, array $res)
+    {
+        $message = '';
+        $status = '';
+        $orderId = $order->get_id();
+        if($this->paylineSuccessWebPaymentDetails($order, $res)) {
+            $this->paylineSetOrderPayed($order);
+        } elseif($this->paylineOnHoldPartnerWebPaymentDetails($order, $res)) {
+            $this->paylineSetOrderOnHold($order);
+        } elseif ($res['result']['code'] == '04003') {
+            update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
+            update_post_meta((int) $orderId, 'Card number', $res['card']['number']);
+            update_post_meta((int) $orderId, 'Payment mean', $res['card']['type']);
+            update_post_meta((int) $orderId, 'Card expiry', $res['card']['expirationDate']);
+            $order->update_status('on-hold', __('Fraud alert. See details in Payline administration center', 'payline'));
+        } elseif ($res['result']['code'] == '02306' || $res['result']['code'] == '02533') {
+            $order->add_order_note(__('Payment in progress', 'payline'));
+            wc_add_notice( __( 'Payment in progress', 'payline' ), 'notice' );
+        } else {
+            if($this->paylineCancelWebPaymentDetails($order, $res)) {
+
+            } elseif ($res['result']['code'] == '02319' || $res['result']['code'] == '02014'){
+                $message = __('Buyer cancelled his payment', 'payline');
+                $status = 'cancelled';
+            } elseif ($res['result']['code'] == '02304' || $res['result']['code'] == '02324'){
+                $message = __('Payment session expired without transaction', 'payline');
+                $status = 'cancelled';
+
+            }elseif ($res['result']['code'] == '02534' || $res['result']['code'] == '02324'){
+                $message = __('Payment session expired with no redirection on payment page', 'payline');
+                $status = 'cancelled';
             } else {
-                $message = '';
-                $status = '';
-                if($this->paylineCancelWebPaymentDetails($order, $res)) {
-
-                } elseif ($res['result']['code'] == '02319' || $res['result']['code'] == '02014'){
-                    $message = __('Buyer cancelled his payment', 'payline');
-                    $status = 'cancelled';
-                } elseif ($res['result']['code'] == '02304' || $res['result']['code'] == '02324'){
-                    $message = __('Payment session expired without transaction', 'payline');
-                    $status = 'cancelled';
-
-                }elseif ($res['result']['code'] == '02534' || $res['result']['code'] == '02324'){
-                    $message = __('Payment session expired with no redirection on payment page', 'payline');
-                    $status = 'cancelled';
-                } else {
-                    if($res['transaction']['id']){
-                        update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
-                    }
-                    $message = sprintf( __('Payment refused (code %s: %s)','payline'), $res['result']['code'], $res['result']['longMessage']);
-                    $status = 'failed';
+                if($res['transaction']['id']){
+                    update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
                 }
-
-                if($status) {
-                    $order->update_status($status, $message);
-                }
-                wp_redirect($this->get_error_payment_url($order, $message));
-                die();
+                $message = sprintf( __('Payment refused (code %s: %s)','payline'), $res['result']['code'], $res['result']['longMessage']);
+                $status = 'failed';
+            }
+            if($status) {
+                $order->update_status($status, $message);
             }
         }
+
+        return $message;
     }
 
     /**
@@ -1086,5 +1166,7 @@ cancelPaylinePayment = function ()
 
         return false;
     }
+
+
 
 }
