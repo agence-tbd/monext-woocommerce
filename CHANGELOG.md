@@ -1,5 +1,12 @@
 Changelog
 -------
+
+---
+* 1.4.6 - 2023/06/12
+  * Compliance with Wordpress 6.2.2
+  * Compliance with Woocommerce 7.2.2
+  * Compliance with Payline PHP SDK 4.74
+
 ---
 * 1.4.5 - 2022/10/07
   * Compliance with Payline PHP SDK 4.71

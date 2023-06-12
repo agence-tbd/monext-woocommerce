@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "277e782123c0472808cb7de4f010ce15",
+    "content-hash": "779741fa68272745eb656217c2624f5f",
     "packages": [
         {
             "name": "monext/payline-sdk",
-            "version": "4.71",
+            "version": "4.74",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PaylineByMonext/payline-php-sdk.git",
-                "reference": "537b3580458ecc2288cb292f6f54d04fff84891c"
+                "reference": "5ff15e0cef8131e6ff01a8111d72b598cef5846b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/537b3580458ecc2288cb292f6f54d04fff84891c",
-                "reference": "537b3580458ecc2288cb292f6f54d04fff84891c",
+                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/5ff15e0cef8131e6ff01a8111d72b598cef5846b",
+                "reference": "5ff15e0cef8131e6ff01a8111d72b598cef5846b",
                 "shasum": ""
             },
             "require": {
@@ -25,7 +25,7 @@
                 "ext-mbstring": "*",
                 "ext-openssl": "*",
                 "ext-soap": "*",
-                "monolog/monolog": "1.* || ~2.0",
+                "monolog/monolog": "1.* || ~2.0 || ~3.0",
                 "php": ">=5.6",
                 "symfony/cache": ">=3.4"
             },
@@ -57,7 +57,13 @@
                 "Payline",
                 "payment"
             ],
-            "time": "2022-06-29T09:43:57+00:00"
+            "support": {
+                "docs": "http://support.payline.com",
+                "email": "support@payline.com",
+                "issues": "https://github.com/PaylineByMonext/payline-php-sdk/issues",
+                "source": "https://github.com/PaylineByMonext/payline-php-sdk/tree/4.74"
+            },
+            "time": "2023-05-03T09:32:26+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -444,5 +450,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "plugin-api-version": "2.3.0"
 }

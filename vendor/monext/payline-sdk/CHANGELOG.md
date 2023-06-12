@@ -1,3 +1,31 @@
+---------------------------------------- 
+
+* 4.74 (2023-03-31)
+  * Update WSDL from 4.73 to 4.74
+  * Add service prepareSession
+  * Add par, tokenRequestorCryptogram, tokenRequestorId, last4, panType on card object
+  * Allow to use monolog/monolog:3.*
+
+----------------------------------------
+
+* 4.73 (2023-01-20)
+  * Update WSDL from 4.72 to 4.73
+  * Fix proxy usage
+  * Fix exception log
+
+----------------------------------------
+
+* 4.72.1 (2023-01-09)
+  * fix missing namespace on address for buyer and wallet
+
+----------------------------------------
+
+* 4.72 (2022-09-09)
+  * Update WSDL from 4.71 to 4.72
+  * add miscData in doCapture
+  * add miscData in doRefund
+  * fix error on strlen in hideChar method
+
 ----------------------------------------
 
 * 4.71 (2022-06-16)
@@ -19,7 +47,7 @@
   * wsdl upgrade
   * add threeDSInfo and travelFileNumber in doAuthorization
   * add threeDSInfo and travelFileNumber in doImmediateWalletPayment
-  * remove duplicate code on sub object creation
+  * remove duplicate code on sub object creation 
   * remove CRLF ending files
   * add reset methode to reuse SDK instance
 
