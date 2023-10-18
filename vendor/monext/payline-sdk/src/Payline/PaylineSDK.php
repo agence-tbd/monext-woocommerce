@@ -9,6 +9,7 @@
  */
 namespace Payline;
 
+
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use SoapClient;
@@ -46,7 +47,7 @@ class PaylineSDK
      * Payline release corresponding to this version of the package
      * @see https://docs.payline.com/display/DT/API+version+history
      */
-    const SDK_RELEASE = 'PHP SDK 4.74';
+    const SDK_RELEASE = 'PHP SDK 4.76';
 
     /**
      * development environment flag
@@ -257,8 +258,16 @@ class PaylineSDK
      * error code/shortMessage returned when Payline can't be reached
      */
     const ERR_CODE = 'XXXXX';
+
     const ERR_SHORT_MESSAGE = 'ERROR';
 
+
+    /**
+     * monext endpoint webservice url
+     * @var string
+     */
+    protected $webServicesEndpoint;
+    
     /**
      * @var Logger
      */
@@ -284,6 +293,7 @@ class PaylineSDK
      * array containing private data
      */
     protected $privateData;
+
 
     /**
      * array containing parent-child nodes associations
@@ -340,7 +350,7 @@ class PaylineSDK
         'doBankTransfer'=>self::DIRECT_API,
         'isRegistered'=>self::DIRECT_API,
         'doWebPayment'=>self::WEB_API,
-        'doAuthorizationRedirect'=>self::WEB_API,
+        'doAuthorizationRedirect'=>self::DIRECT_API,
         'getWebPaymentDetails'=>self::WEB_API,
         'manageWebWallet'=>self::WEB_API,
         'createWebWallet'=>self::WEB_API,
@@ -407,8 +417,14 @@ class PaylineSDK
         }
 
         $this->loggerPath = $pathLog . $logfileDate . '.log';
-
+        try {
+            if(is_writable($pathLog) || is_writable(dirname($pathLog))) {
         $this->logger->pushHandler(new StreamHandler($this->loggerPath, $logLevel)); // set default log folder
+            }
+        } catch (\Exception $e) {
+            $this->loggerPath = null;
+            //No logger can be used
+        }
 
         $this->logger->info('__construct', array(
             'merchant_id' => $this->hideChars($merchant_id, 6, 1),
@@ -643,7 +659,7 @@ class PaylineSDK
      *
      * @param array $array
      *            the array keys are listed in Wallet CLASS.
-     * @param array $address
+     * @param array $shippingAddress
      *            the array keys are listed in Address CLASS.
      * @param array $card
      *            the array keys are listed in Card CLASS.
@@ -651,13 +667,9 @@ class PaylineSDK
      */
     protected function wallet(array $array, array $shippingAddress = array(), array $card = array())
     {
-
-        $buyerArray = !empty($array['buyer']) ? $array['buyer'] : $array;
-        $shippingAddress = !empty($array['shippingAddress']) ? $array['shippingAddress'] : $shippingAddress;
         $card = !empty($array['card']) ? $array['card'] : $card;
 
         $wallet = $this->fillObject($array, new Wallet());
-//        $wallet->shippingAddress = $this->address($shippingAddress);
         $wallet->card = $this->card($card);
         return new \SoapVar($wallet, SOAP_ENC_OBJECT, self::SOAP_WALLET, SoapVarFactory::PAYLINE_NAMESPACE);
     }
@@ -1075,7 +1087,7 @@ class PaylineSDK
 
 
     /**
-     * @param $method
+     * @param $Method
      * @return false|string
      */
     protected function getApiForMethod($Method)
@@ -1782,7 +1794,7 @@ class PaylineSDK
     }
 
     /**
-     * calls doAuthorizationRedirectRequest web service
+     * calls doAuthorizationRedirect web service
      *
      * @param array $array
      *            associative array containing doAuthorizationRedirectRequest parameters
@@ -1797,7 +1809,7 @@ class PaylineSDK
                 $WSRequest['recurring'] = $this->recurring($array['recurring']);
             }
         }
-        return $this->webServiceRequest($array, $WSRequest, self::WEB_API, 'doAuthorizationRedirect');
+        return $this->webServiceRequest($array, $WSRequest, self::DIRECT_API, 'doAuthorizationRedirect');
     }
 
     /**
@@ -2020,7 +2032,7 @@ class PaylineSDK
      *            decrypted message sent by getToken servlet
      * @param string $filename
      * @param string $error
-     * @param unknown $maxlength
+     * @param int $maxlength
      * @return NULL|boolean|string
      */
     public function gzdecode($data, &$filename = '', &$error = '', $maxlength = null)
@@ -2118,7 +2130,7 @@ class PaylineSDK
                     return false;
             }
         } // zero-byte body content is allowed
-          // Verifiy CRC32
+          // Verifiy CRC32Date;Type;Value;ResulCode;ResultMessage
         $crc = sprintf("%u", crc32($data));
         $crcOK = $crc == $datacrc;
         $lenOK = $isize == strlen($data);
@@ -2191,12 +2203,13 @@ class PaylineSDK
      * ************************************************************************
      */
 
+
     /**
      * Pretty print XML
      *
-     * @param string $xml
-     *            content of the xml file to make pretty
-     * @return boolean|string
+     * @param $xml
+     * @param $key
+     * @return void
      */
     protected function beautifulerXML(&$xml, $key) {
         if(in_array($key, array('Request', 'Response')) && $xml) {

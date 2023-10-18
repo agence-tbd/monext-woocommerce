@@ -92,8 +92,9 @@ abstract class WC_Abstract_Recurring_Payline_NX extends WC_Abstract_Payline {
         if($res['result']['code'] == '02500') {
             $orderId = $order->get_id();
             // Store transaction details
-            update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
-            update_post_meta((int) $orderId, '_contract_number', $res['payment']['contractNumber']);
+            $order->update_meta_data( 'Transaction ID', $res['transaction']['id']);
+            $order->update_meta_data( '_contract_number', $res['payment']['contractNumber']);
+            $order->save();
             $order->payment_complete($res['transaction']['id']);
             return true;
         }

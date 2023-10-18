@@ -1,3 +1,20 @@
+
+* 4.76 (2023-09-25)
+  * Update WSDL from 4.75 to 4.76
+  * Add reattempt to authorization
+  * Move doAuthorizationRedirect from WebPaymentAPI to DirectPaymentAPI
+
+----------------------------------------
+
+* 4.75 (2023-07-04)
+  * Update WSDL from 4.74 to 4.75
+  * Add miscData to doCredit
+  * Add miscData to doDebit
+  * Allow to pass 0 amount on payment in doWebPayment
+  * Prevent permission error on log directory
+  * Fix php warning (Creation of dynamic property) on PHP8.2
+  * Add Missing Payline\Objects\WalletIdList
+
 ---------------------------------------- 
 
 * 4.74 (2023-03-31)

@@ -16,7 +16,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.4.6';
+    protected $extensionVersion = '1.4.7';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 26;
@@ -665,10 +665,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         if (!is_dir($pathLog)) {
             @mkdir($pathLog, 0777, true);
         }
+        $usedBy = [];
+        $usedBy[] = 'WP '.get_bloginfo('version');
 
         $woocommerceinfo = get_plugins('/woocommerce');
-        $usedBy = (!empty($woocommerceinfo)) ? current($woocommerceinfo)['Name'] .' '. current($woocommerceinfo)['Version'] : 'wooComm';
-        $usedBy .= ' - v'.$this->extensionVersion;
+        $usedBy[] = (!empty($woocommerceinfo)) ? current($woocommerceinfo)['Name'] .' '. current($woocommerceinfo)['Version'] : 'wooComm';
+        $usedBy[] = 'v'.$this->extensionVersion;
 
         $SDK = new PaylineSDK(
             $this->settings['merchant_id'],
@@ -681,7 +683,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $pathLog,
             ($this->debugEnable) ? Logger::DEBUG : Logger::INFO
         );
-        $SDK->usedBy($usedBy);
+        $SDK->usedBy(implode(' - ',$usedBy));
 
         return $SDK;
     }
@@ -732,7 +734,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
         $doWebPaymentRequest['buyer']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
         $doWebPaymentRequest['buyer']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
-        $doWebPaymentRequest['buyer']['customerId'] = $this->cleanSubstr($order->get_billing_email(), 0, 50);
+        $doWebPaymentRequest['buyer']['customerId'] = $order->get_user_id() ? $this->cleanSubstr($order->get_user_id(), 0, 50) : 0;
         $doWebPaymentRequest['buyer']['email'] = $this->cleanSubstr($order->get_billing_email(), 0, 150);
         $doWebPaymentRequest['buyer']['ip'] = $_SERVER['REMOTE_ADDR'];
         $doWebPaymentRequest['buyer']['mobilePhone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
@@ -1044,10 +1046,11 @@ cancelPaylinePayment = function ()
         } elseif($this->paylineOnHoldPartnerWebPaymentDetails($order, $res)) {
             $this->paylineSetOrderOnHold($order);
         } elseif ($res['result']['code'] == '04003') {
-            update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
-            update_post_meta((int) $orderId, 'Card number', $res['card']['number']);
-            update_post_meta((int) $orderId, 'Payment mean', $res['card']['type']);
-            update_post_meta((int) $orderId, 'Card expiry', $res['card']['expirationDate']);
+            $order->update_meta_data( 'Transaction ID', $res['transaction']['id']);
+            $order->update_meta_data( 'Card number', $res['card']['number']);
+            $order->update_meta_data( 'Payment mean', $res['card']['type']);
+            $order->update_meta_data( 'Card expiry', $res['card']['expirationDate']);
+            //Implicit save with update_status
             $order->update_status('on-hold', __('Fraud alert. See details in Payline administration center', 'payline'));
         } elseif ($res['result']['code'] == '02306' || $res['result']['code'] == '02533') {
             $order->add_order_note(__('Payment in progress', 'payline'));
@@ -1067,7 +1070,8 @@ cancelPaylinePayment = function ()
                 $status = 'cancelled';
             } else {
                 if($res['transaction']['id']){
-                    update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
+                    //Implicit save with update_status cause $status is set on 'failed'
+                    $order->update_meta_data('Transaction ID', $res['transaction']['id']);
                 }
                 $message = sprintf( __('Payment refused (code %s: %s)','payline'), $res['result']['code'], $res['result']['longMessage']);
                 $status = 'failed';
@@ -1117,7 +1121,7 @@ cancelPaylinePayment = function ()
      * @return bool
      */
     public function can_refund_order( $order ) {
-        $contractNumber = get_post_meta($order->get_id(),'_contract_number' ,true);
+        $contractNumber = $order->get_meta('_contract_number' ,true);
         return $order && $order->get_transaction_id();
     }
 
@@ -1144,7 +1148,7 @@ cancelPaylinePayment = function ()
         $paymentParams['currency'] = $this->_currencies[$order->get_currency()];
         $paymentParams['action'] = 421;
         $paymentParams['mode'] =  $this->paymentMode;
-        $paymentParams['contractNumber'] =  get_post_meta($order_id,'_contract_number' ,true);
+        $paymentParams['contractNumber'] = $order->get_meta('_contract_number' ,true);
 
         $refundParams = array(
             'transactionID' => $order->get_transaction_id(),

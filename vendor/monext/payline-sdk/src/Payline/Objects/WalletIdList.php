@@ -9,15 +9,8 @@
  */
 namespace Payline\Objects;
 
-class Authorization
+class WalletIdList
 {
-    public $number;
 
-    public $date;
-
-    public $authorizedAmount;
-
-    public $authorizedCurrency;
-
-    public $reattempt;
+    public $walletId = [];
 }

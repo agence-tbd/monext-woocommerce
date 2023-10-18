@@ -188,4 +188,8 @@ function payline_auto_update_plugin( $should_update, $plugin ) {
 add_filter( 'auto_update_plugin', 'payline_auto_update_plugin', 100, 2 );
 
 
-
+add_action( 'before_woocommerce_init', function() {
+    if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+    }
+} );
