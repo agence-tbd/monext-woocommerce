@@ -178,6 +178,7 @@
 						<element name="privateDataList" nillable="true" type="tns1:privateDataList"/>
 						<element name="sequenceNumber" nillable="true" type="xsd:string"/>
 						<element name="media" nillable="true" type="xsd:string"/>
+						<element name="miscData" nillable="true" type="xsd:string"/>
 					</sequence>
 				</complexType>
 			</element>
@@ -241,6 +242,7 @@
 						<element name="sequenceNumber" nillable="true" type="xsd:string"/>
 						<element name="media" nillable="true" type="xsd:string"/>
 						<element minOccurs="0" name="details" nillable="true" type="tns1:details"/>
+						<element name="miscData" nillable="true" type="xsd:string"/>
 					</sequence>
 				</complexType>
 			</element>
@@ -1107,6 +1109,7 @@
 						<element minOccurs="0" name="virtualCvx" nillable="true" type="xsd:string"/>
 						<element minOccurs="0" name="token" nillable="true" type="xsd:string"/>
 						<element name="privateDataList" nillable="true" type="tns1:privateDataList"/>
+						<element minOccurs="0" name="sdkChallenge" nillable="true" type="tns1:sdkChallenge"/>
 					</sequence>
 				</complexType>
 			</element>
@@ -1190,6 +1193,7 @@
 					</annotation>
                     <sequence>
                         <element name="version" nillable="true" type="xsd:string"/>
+						<element name="merchantKeyName" nillable="true" type="xsd:string"/>
                     </sequence>
 				</complexType>
 			</element>
@@ -1562,6 +1566,37 @@
 				</complexType>
 			</element>
 
+			<element name="prepareSessionRequest">
+				<complexType>
+					<annotation>
+						<documentation>
+							This element is the request for the
+							prepareSession method
+						</documentation>
+					</annotation>
+					<sequence>
+						<element name="version" nillable="false" type="xsd:string"/>
+						<element name="contractNumber" nillable="false" type="xsd:string"/>
+						<element name="orderRef" nillable="false" type="xsd:string"/>
+						<element name="miscData" nillable="false" type="xsd:string"/>
+					</sequence>
+				</complexType>
+			</element>
+			<element name="prepareSessionResponse">
+				<complexType>
+					<annotation>
+						<documentation>
+							This element is the reponse from the
+							prepareSession method
+						</documentation>
+					</annotation>
+					<sequence>
+						<element name="result" nillable="false" type="tns1:result"/>
+						<element name="data" nillable="false" type="xsd:string"/>
+					</sequence>
+				</complexType>
+			</element>
+
 		</schema>
     <schema elementFormDefault="qualified" targetNamespace="http://obj.ws.payline.experian.com" xmlns="http://www.w3.org/2001/XMLSchema">
 			<complexType name="result">
@@ -1641,6 +1676,7 @@
 				<sequence>
 					<element name="keyId" nillable="false" type="xsd:integer"/>
 					<element name="modulus" nillable="false" type="xsd:string"/>
+					<element name="merchantKeyName" nillable="false" type="xsd:string"/>
 					<element name="publicExponent" nillable="false" type="xsd:string"/>
 					<element name="expirationDate" nillable="false" type="xsd:string"/>
                     <element name="cipher" nillable="true" type="xsd:string"/>
@@ -1834,6 +1870,11 @@
 					<element minOccurs="0" name="cardholder" nillable="true" type="xsd:string"/>
 					<element minOccurs="0" name="token" nillable="true" type="xsd:string"/>
 					<element minOccurs="0" name="paymentData" nillable="false" type="tns1:paymentData"/>
+					<element minOccurs="0" name="par" nillable="true" type="xsd:string"/>
+					<element minOccurs="0" name="tokenRequestorCryptogram" nillable="true" type="xsd:string"/>
+					<element minOccurs="0" name="tokenRequestorId" nillable="true" type="xsd:string"/>
+					<element minOccurs="0" name="last4" nillable="true" type="xsd:string"/>
+					<element minOccurs="0" name="panType" nillable="true" type="xsd:string"/>
 				</sequence>
 			</complexType>
 			<complexType name="buyer">
@@ -1861,6 +1902,7 @@
 					<element name="mobilePhone" nillable="true" type="xsd:string"/>
 					<element name="customerId" nillable="true" type="xsd:string"/>
 					<element name="legalStatus" nillable="true" type="xsd:string"/>
+					<element name="legalDocumentType" nillable="true" type="xsd:string"/>
 					<element name="legalDocument" nillable="true" type="xsd:string"/>
 					<element name="birthDate" nillable="true" type="xsd:string"/>
 					<element name="fingerprintID" nillable="true" type="xsd:string"/>
@@ -2889,6 +2931,28 @@
             <element name="date" nillable="true" type="xsd:string"/>
             </sequence>
             </complexType>
+			<complexType name="sdkChallenge">
+				<annotation>
+					<documentation>
+						This element contains information about SDK 3DS Challenge.
+					</documentation>
+				</annotation>
+				<sequence>
+					<element name="cardType" type="xsd:string"/>
+					<element name="threeDSServerTransID" type="xsd:string"/>
+					<element name="threeDSVersion" type="xsd:string"/>
+					<element name="authenticationType" type="xsd:string"/>
+					<element name="transStatus" type="xsd:string"/>
+					<element name="sdkTransID" type="xsd:string"/>
+					<element name="dsTransID" type="xsd:string"/>
+					<element name="acsTransID" type="xsd:string"/>
+					<element name="acsRenderingType" type="xsd:string"/>
+					<element name="acsReferenceNumber" type="xsd:string"/>
+					<element name="acsSignedContent" type="xsd:string"/>
+					<element name="acsOperatorID" type="xsd:string"/>
+					<element name="acsChallengeMandated" type="xsd:string"/>
+				</sequence>
+			</complexType>
 		</schema>
   </wsdl:types>
   <wsdl:message name="getTransactionDetailsRequest">
@@ -2963,6 +3027,10 @@
     <wsdl:part name="parameters" element="impl:doBankTransferRequest">
     </wsdl:part>
   </wsdl:message>
+  <wsdl:message name="prepareSessionRequest">
+    <wsdl:part name="parameters" element="impl:prepareSessionRequest">
+    </wsdl:part>
+  </wsdl:message>
   <wsdl:message name="isRegisteredResponse">
     <wsdl:part name="parameters" element="impl:isRegisteredResponse">
     </wsdl:part>
@@ -2989,6 +3057,10 @@
   </wsdl:message>
   <wsdl:message name="updateWalletRequest">
     <wsdl:part name="parameters" element="impl:updateWalletRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="prepareSessionResponse">
+    <wsdl:part name="parameters" element="impl:prepareSessionResponse">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="doScoringChequeResponse">
@@ -3450,6 +3522,12 @@
       <wsdl:output name="isRegisteredResponse" message="impl:isRegisteredResponse">
     </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="prepareSession">
+      <wsdl:input name="prepareSessionRequest" message="impl:prepareSessionRequest">
+    </wsdl:input>
+      <wsdl:output name="prepareSessionResponse" message="impl:prepareSessionResponse">
+    </wsdl:output>
+    </wsdl:operation>
   </wsdl:portType>
   <wsdl:portType name="ExtendedAPI">
     <wsdl:operation name="getTransactionDetails">
@@ -3745,6 +3823,15 @@
     </wsdl:operation>
     <wsdl:operation name="isRegistered">
       <wsdlsoap:operation soapAction="isRegistered"/>
+      <wsdl:input>
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="prepareSession">
+      <wsdlsoap:operation soapAction="prepareSession"/>
       <wsdl:input>
         <wsdlsoap:body use="literal"/>
       </wsdl:input>
