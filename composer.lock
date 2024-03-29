@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "779741fa68272745eb656217c2624f5f",
+    "content-hash": "7d552e44207e43ce29e27ba6765acf12",
     "packages": [
         {
             "name": "monext/payline-sdk",
-            "version": "4.74",
+            "version": "4.76",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PaylineByMonext/payline-php-sdk.git",
-                "reference": "5ff15e0cef8131e6ff01a8111d72b598cef5846b"
+                "reference": "4aa56dd0f63fc0e1b6de0f08da0b099790daa99d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/5ff15e0cef8131e6ff01a8111d72b598cef5846b",
-                "reference": "5ff15e0cef8131e6ff01a8111d72b598cef5846b",
+                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/4aa56dd0f63fc0e1b6de0f08da0b099790daa99d",
+                "reference": "4aa56dd0f63fc0e1b6de0f08da0b099790daa99d",
                 "shasum": ""
             },
             "require": {
@@ -57,13 +57,7 @@
                 "Payline",
                 "payment"
             ],
-            "support": {
-                "docs": "http://support.payline.com",
-                "email": "support@payline.com",
-                "issues": "https://github.com/PaylineByMonext/payline-php-sdk/issues",
-                "source": "https://github.com/PaylineByMonext/payline-php-sdk/tree/4.74"
-            },
-            "time": "2023-05-03T09:32:26+00:00"
+            "time": "2023-10-10T09:30:19+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -450,5 +444,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "1.1.0"
 }

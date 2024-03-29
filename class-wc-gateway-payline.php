@@ -54,11 +54,12 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
             $orderId = $order->get_id();
 
             // Store transaction details
-            update_post_meta((int) $orderId, 'Transaction ID', $res['transaction']['id']);
-            update_post_meta((int) $orderId, 'Card number', $res['card']['number']);
-            update_post_meta((int) $orderId, 'Payment mean', $res['card']['type']);
-            update_post_meta((int) $orderId, 'Card expiry', $res['card']['expirationDate']);
-            update_post_meta((int) $orderId, '_contract_number', $res['payment']['contractNumber']);
+            $order->update_meta_data( 'Transaction ID', $res['transaction']['id']);
+            $order->update_meta_data( 'Card number', $res['card']['number']);
+            $order->update_meta_data( 'Payment mean', $res['card']['type']);
+            $order->update_meta_data( 'Card expiry', $res['card']['expirationDate']);
+            $order->update_meta_data( '_contract_number', $res['payment']['contractNumber']);
+            $order->save();
             $order->payment_complete($res['transaction']['id']);
             return true;
         }

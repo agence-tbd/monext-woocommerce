@@ -1,5 +1,11 @@
 Changelog
 -------
+---
+* 1.4.7 - 2023/06/12
+  * Compliance with Wordpress 6.3.2
+  * Compliance with Woocommerce 8.2.1 and compatibility with HPOS
+  * Add customer id in buyer field customer_id
+  * Compliance with Payline PHP SDK 4.76
 
 ---
 * 1.4.6 - 2023/06/12

@@ -208,6 +208,7 @@
 						<element name="buyer" nillable="true" type="tns1:buyer"/>
 						<element name="owner" nillable="true" type="tns1:owner"/>
 						<element name="privateDataList" nillable="true" type="tns1:privateDataList"/>
+						<element name="miscData" nillable="true" type="xsd:string"/>
 						<element name="authentication3DSecure" nillable="true" type="tns1:authentication3DSecure"/>
 						<element name="authorization" nillable="false" type="tns1:authorization"/>
 						<element name="media" nillable="true" type="xsd:string"/>
@@ -312,6 +313,7 @@
 						<element name="buyer" nillable="true" type="tns1:buyer"/>
 						<element name="owner" nillable="true" type="tns1:owner"/>
 						<element name="privateDataList" nillable="true" type="tns1:privateDataList"/>
+						<element name="miscData" nillable="true" type="xsd:string"/>
 						<element name="media" nillable="true" type="xsd:string"/>
 						<element name="subMerchant" nillable="true" type="tns1:subMerchant"/>
 					</sequence>
@@ -1837,6 +1839,7 @@
 					<element name="date" nillable="false" type="xsd:string"/>
 					<element name="authorizedAmount" nillable="true" type="xsd:string"/>
 					<element name="authorizedCurrency" nillable="true" type="xsd:string"/>
+					<element minOccurs="0" name="reattempt" nillable="true" type="tns1:reattempt"/>
 				</sequence>
 			</complexType>
 			<complexType name="paymentData">
@@ -2953,6 +2956,19 @@
 					<element name="acsChallengeMandated" type="xsd:string"/>
 				</sequence>
 			</complexType>
+			<complexType name="reattempt">
+				<annotation>
+					<documentation>
+						This element contains information about Reattempt.
+					</documentation>
+				</annotation>
+				<sequence>
+					<element name="indicator" nillable="true" type="xsd:string"/>
+					<element name="frozenPeriod" nillable="true" type="xsd:string"/>
+					<element name="allowedDuration" nillable="true" type="xsd:string"/>
+					<element name="maxAllowed" nillable="true" type="xsd:string"/>
+				</sequence>
+			</complexType>
 		</schema>
   </wsdl:types>
   <wsdl:message name="getTransactionDetailsRequest">
@@ -3328,14 +3344,14 @@
       <wsdl:output name="getWebWalletResponse" message="impl:getWebWalletResponse">
     </wsdl:output>
     </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="DirectPaymentAPI">
     <wsdl:operation name="doAuthorizationRedirect">
       <wsdl:input name="doAuthorizationRedirectRequest" message="impl:doAuthorizationRedirectRequest">
     </wsdl:input>
       <wsdl:output name="doAuthorizationRedirectResponse" message="impl:doAuthorizationRedirectResponse">
     </wsdl:output>
     </wsdl:operation>
-  </wsdl:portType>
-  <wsdl:portType name="DirectPaymentAPI">
     <wsdl:operation name="doAuthorization">
       <wsdl:input name="doAuthorizationRequest" message="impl:doAuthorizationRequest">
     </wsdl:input>
@@ -3839,6 +3855,15 @@
         <wsdlsoap:body use="literal"/>
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="doAuthorizationRedirect">
+      <wsdlsoap:operation soapAction="doAuthorizationRedirect"/>
+      <wsdl:input>
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
   </wsdl:binding>
   <wsdl:binding name="WebPaymentAPISoapBinding" type="impl:WebPaymentAPI">
     <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
@@ -3889,15 +3914,6 @@
     </wsdl:operation>
     <wsdl:operation name="getWebWallet">
       <wsdlsoap:operation soapAction="getWebWallet"/>
-      <wsdl:input>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:input>
-      <wsdl:output>
-        <wsdlsoap:body use="literal"/>
-      </wsdl:output>
-    </wsdl:operation>
-    <wsdl:operation name="doAuthorizationRedirect">
-      <wsdlsoap:operation soapAction="doAuthorizationRedirect"/>
       <wsdl:input>
         <wsdlsoap:body use="literal"/>
       </wsdl:input>
