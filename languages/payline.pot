@@ -441,3 +441,11 @@ msgstr ""
 
 msgid "Choose the status of payed order"
 msgstr ""
+
+#: class-wc-abstract-payline.php:371
+msgid "Wallet"
+msgstr ""
+
+#: class-wc-abstract-payline.php:373
+msgid "Enable wallet"
+msgstr ""

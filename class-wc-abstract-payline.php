@@ -367,6 +367,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             'description' => __( 'This controls the description which the user sees during checkout.', 'payline' ),
             'default' => sprintf(__('You will be redirected on %s secured pages at the end of your order.', 'payline'), 'Payline')
         );
+	    $this->form_fields['wallet'] = array(
+		    'title' => __('Wallet', 'payline'),
+		    'type' => 'checkbox',
+		    'label' => __('Enable wallet', 'payline'),
+		    'default' => 'no'
+	    );
         $this->form_fields['debug'] = array(
             'title' => __( 'Debug logging', 'payline' ),
             'type' => 'checkbox',
@@ -738,6 +744,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['buyer']['email'] = $this->cleanSubstr($order->get_billing_email(), 0, 150);
         $doWebPaymentRequest['buyer']['ip'] = $_SERVER['REMOTE_ADDR'];
         $doWebPaymentRequest['buyer']['mobilePhone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
+        if($this->settings['wallet'] == 'yes'){
+	        $doWebPaymentRequest['buyer']['walletId'] = $this->encryptWalletId($order->get_user_id());
+        }
 
         // BILLING ADDRESS
         $doWebPaymentRequest['billingAddress']['name'] = $order->get_billing_first_name() . " " . $order->get_billing_last_name();
@@ -1171,6 +1180,13 @@ cancelPaylinePayment = function ()
         return false;
     }
 
-
+	/**
+     * Return md5 encrypted customerId to use as walletId in Payline Web services
+	 * @param string $customerId
+	 * @return string
+	 */
+	public function encryptWalletId(string $customerId) {
+	    return md5($customerId);
+    }
 
 }
