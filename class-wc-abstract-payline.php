@@ -16,7 +16,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.4.7';
+    protected $extensionVersion = '1.4.8';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 26;
@@ -26,6 +26,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     protected $posData;
     protected $disp_errors = "";
     protected $admin_link = "";
+
     protected $debug = false;
 
     var $_currencies = array(
@@ -214,6 +215,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         'XTS' => '963', // Codes specifically reserved for testing purposes
         'XXX' => '999', // The codes assigned for transactions where no currency is involved
     );
+
+    protected $testmode;
+    protected $debugEnable;
 
     public function __construct() {
 
