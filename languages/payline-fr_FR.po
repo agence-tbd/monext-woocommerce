@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Payline\n"
 "POT-Creation-Date: 2017-02-08 09:59+0100\n"
-"PO-Revision-Date: 2021-03-11 12:35+0000\n"
+"PO-Revision-Date: 2024-04-19 12:18+0000\n"
 "Last-Translator: \n"
 "Language-Team: Français\n"
 "Language: fr_FR\n"
@@ -20,7 +20,7 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 "Report-Msgid-Bugs-To: \n"
-"X-Loco-Version: 2.5.0; wp-5.5.1"
+"X-Loco-Version: 2.6.7; wp-6.4.3-alpha-57183"
 
 #: class-wc-abstract-payline.php:506 class-wc-abstract-payline.php:510
 #: class-wc-abstract-payline.php:515
@@ -149,6 +149,10 @@ msgstr "Activer"
 msgid "Enable %s"
 msgstr "Activer %s"
 
+#: class-wc-abstract-payline.php:373
+msgid "Enable wallet"
+msgstr "Activer le portefeuille"
+
 #: class-wc-abstract-payline.php:414
 msgid "fr"
 msgstr "fr"
@@ -197,7 +201,6 @@ msgid "In-Shop Tab mode"
 msgstr "Mode In-Shop tabulations"
 
 #: class-wc-abstract-payline.php:440
-#, php-format
 msgid ""
 "Integration mode of the payment widget in the shop. Contact payline support "
 "for more details"
@@ -329,6 +332,14 @@ msgstr "La session du paiement a expiré sans transaction"
 msgid "PAYMENT SETTINGS"
 msgstr "PARAMETRES DE PAIEMENT"
 
+#: class-wc-abstract-payline.php:374
+msgid ""
+"Please note: This service is optional and can be configured via the Monext "
+"Online Administration Center"
+msgstr ""
+"Attention : Service en option et paramétrable à partir du Centre "
+"d'Administration Monext Online."
+
 #: class-wc-abstract-payline.php:389
 msgid "Port"
 msgstr "Port"
@@ -442,6 +453,10 @@ msgstr "Impossible de se connecter à Payline (Code%s:%s)"
 #, php-format
 msgid "Unable to connect to Payline, check your %s"
 msgstr "Impossible de se connecter à Payline, vérifiez votre%s"
+
+#: class-wc-abstract-payline.php:371
+msgid "Wallet"
+msgstr "Portefeuille"
 
 #: class-wc-abstract-payline.php:431
 msgid "Widget integration mode"
