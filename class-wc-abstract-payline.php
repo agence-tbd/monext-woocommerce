@@ -371,6 +371,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 		    'title' => __('Wallet', 'payline'),
 		    'type' => 'checkbox',
 		    'label' => __('Enable wallet', 'payline'),
+		    'description' => __( 'Please note: This service is optional and can be configured via the Monext Online Administration Center', 'payline' ),
 		    'default' => 'no'
 	    );
         $this->form_fields['debug'] = array(

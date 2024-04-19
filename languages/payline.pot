@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Payline\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 09:11+0000\n"
+"POT-Creation-Date: 2024-04-19 09:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -428,7 +428,6 @@ msgstr ""
 msgid "Your settings is correct, connexion with Payline is established"
 msgstr ""
 
-
 msgid "Payed order status"
 msgstr ""
 
@@ -437,7 +436,6 @@ msgstr ""
 
 msgid "Completed"
 msgstr ""
-
 
 msgid "Choose the status of payed order"
 msgstr ""
@@ -448,4 +446,8 @@ msgstr ""
 
 #: class-wc-abstract-payline.php:373
 msgid "Enable wallet"
+msgstr ""
+
+#: class-wc-abstract-payline.php:374
+msgid "Please note: This service is optional and can be configured via the Monext Online Administration Center"
 msgstr ""
