@@ -1,5 +1,9 @@
 Changelog
 -------
+* 1.4.8 - 2024/04/19
+  * Wallet activation
+  * Fix warning on properies declaration
+  
 ---
 * 1.4.7 - 2023/06/12
   * Compliance with Wordpress 6.3.2
