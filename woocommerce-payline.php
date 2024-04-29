@@ -28,6 +28,11 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use Payline\Blocks\Payments\PaylineRec;
+use Payline\Blocks\Payments\PaylineCpt;
+use Payline\Blocks\Payments\PaylineNx;
+
 if (!defined('ABSPATH')) exit;
 
 define('WCPAYLINE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -72,6 +77,18 @@ function woocommerce_payline_init() {
         require_once 'class-wc-gateway-payline-rec.php';
     }
 
+	if (!class_exists('PaylineCPT')) {
+		require_once 'packages/blocks/src/Payments/PaylineCpt.php';
+	}
+
+    if (!class_exists('PaylineRec')) {
+        require_once 'packages/blocks/src/Payments/PaylineRec.php';
+    }
+
+    if (!class_exists('PaylineNx')) {
+        require_once 'packages/blocks/src/Payments/PaylineNx.php';
+    }
+
 	require_once 'vendor/autoload.php';
 }
 add_action('woocommerce_init', 'woocommerce_payline_init');
@@ -84,6 +101,9 @@ add_action('woocommerce_init', 'woocommerce_payline_init');
  * @return mixed
  */
 function woocommerce_payline_add_method($methods) {
+    $methods[] = 'PaylineCpt';
+    $methods[] = 'PaylineRec';
+    $methods[] = 'PaylineNx';
     $methods[] = 'WC_Gateway_Payline';
     $methods[] = 'WC_Gateway_Payline_NX';
     $methods[] = 'WC_Gateway_Payline_REC';
@@ -193,3 +213,17 @@ add_action( 'before_woocommerce_init', function() {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
     }
 } );
+
+add_action( 'woocommerce_blocks_loaded', 'payline_register_payment_methods' );
+
+function payline_register_payment_methods() {
+	if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+		add_action(
+			'woocommerce_blocks_payment_method_type_registration',
+			function ( PaymentMethodRegistry $payment_method_registry ) {
+				$payment_method_registry->register( new PaylineRec );
+				$payment_method_registry->register( new PaylineCpt );
+				$payment_method_registry->register( new PaylineNx );
+			} );
+	}
+}
