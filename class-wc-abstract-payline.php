@@ -2,6 +2,7 @@
 
 use Monolog\Logger;
 use Payline\PaylineSDK;
+use Automattic\WooCommerce\Utilities\LoggingUtil;
 
 
 abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
@@ -672,7 +673,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        $pathLog = trailingslashit(dirname(wc_get_log_file_path('payline'))) . trailingslashit('payline');
+        $pathLog = trailingslashit(LoggingUtil::get_log_directory()). trailingslashit('payline');
         if (!is_dir($pathLog)) {
             @mkdir($pathLog, 0777, true);
         }
@@ -938,10 +939,18 @@ cancelPaylinePayment = function ()
      */
     protected function payline_callback_cancel($message='') {
 
+	    $this->SDK = $this->getSDK();
+	    $res = $this->SDK->getWebPaymentDetails(array('token'=>$_GET['paylinetoken'],'version'=>$this->APIVersion));
+	    $order = wc_get_order($res['order']['ref']);
+
+	    $order->update_status('cancelled');
+
         $noticeMessage = __( 'Payment was canceled.', 'payline' );
         wc_add_notice( $noticeMessage , 'error' );
         $errorCartUrl = add_query_arg(
-            array('payline_cancel'=>1
+            array('payline_cancel'=>1,
+			    'order_again'    => $order->get_id(),
+			    '_wpnonce'       => wp_create_nonce( 'woocommerce-order_again' )
             ),
             wc_get_cart_url()
         );
