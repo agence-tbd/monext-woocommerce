@@ -943,10 +943,26 @@ cancelPaylinePayment = function ()
 	    $res = $this->SDK->getWebPaymentDetails(array('token'=>$_GET['paylinetoken'],'version'=>$this->APIVersion));
 	    $order = wc_get_order($res['order']['ref']);
 
-	    $order->update_status('cancelled');
+        // No refund on 02314 result code (when order is canceled before payement)
+	    if($res['result']['code'] == '00000'){
+		    // Order need transaction_id to be refunded in process_refund function
+		    if(!empty($res['transaction']['id'])) {
+			    $order->set_transaction_id($res['transaction']['id']);
+			    $order->save();
+		    }
+		    $transactionCanceled = $this->process_refund($order->get_id(), round($res['payment']['amount']/100), $message);
+        }else{
+		    $transactionCanceled = true;
+	    }
 
-        $noticeMessage = __( 'Payment was canceled.', 'payline' );
-        wc_add_notice( $noticeMessage , 'error' );
+	    if ($transactionCanceled and !is_wp_error($transactionCanceled)) {
+		    $order->update_status('cancelled', $message);
+	        $noticeMessage = __( 'Payment was canceled.', 'payline' );
+        }else {
+	        $noticeMessage = __( 'Payment cannot be canceled now. Please contact us.', 'payline' );
+        }
+
+	    wc_add_notice( $noticeMessage , 'error' );
         $errorCartUrl = add_query_arg(
             array('payline_cancel'=>1,
 			    'order_again'    => $order->get_id(),
