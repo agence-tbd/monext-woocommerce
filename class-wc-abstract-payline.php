@@ -673,7 +673,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        $pathLog = trailingslashit(LoggingUtil::get_log_directory()). trailingslashit('payline');
+	    $pathLog = trailingslashit( dirname( WC_Log_Handler_File::get_log_file_path( 'payline' ) ) ) . trailingslashit( 'payline' );
         if (!is_dir($pathLog)) {
             @mkdir($pathLog, 0777, true);
         }
