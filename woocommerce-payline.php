@@ -58,36 +58,40 @@ function woocommerce_payline_init() {
 	load_plugin_textdomain('payline', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
     if ( ! class_exists( 'WC_Abstract_Payline', false ) ) {
-        include_once 'class-wc-abstract-payline.php';
+        include_once 'includes/class-wc-abstract-payline.php';
     }
 
     if ( ! class_exists( 'WC_Abstract_Recurring_Payline_NX', false ) ) {
-        include_once 'class-wc-abstract-recurring-payline.php';
+        include_once 'includes/class-wc-abstract-recurring-payline.php';
     }
 	
 	if (!class_exists('WC_Gateway_Payline')) {
-		require_once 'class-wc-gateway-payline.php';
+		require_once 'includes/gateway/class-wc-gateway-payline.php';
 	}
 
     if (!class_exists('WC_Gateway_Payline_NX')) {
-        require_once 'class-wc-gateway-payline-nx.php';
+        require_once 'includes/gateway/class-wc-gateway-payline-nx.php';
     }
 
     if (!class_exists('WC_Gateway_Payline_REC')) {
-        require_once 'class-wc-gateway-payline-rec.php';
+        require_once 'includes/gateway/class-wc-gateway-payline-rec.php';
     }
 
-	if (!class_exists('PaylineCPT')) {
-		require_once 'packages/blocks/src/Payments/PaylineCpt.php';
+	if (!class_exists('WC_Block_Abstract_Payline')) {
+		require_once 'includes/blocks/class-wc-blocs-abstract-payline.php';
 	}
 
-    if (!class_exists('PaylineRec')) {
-        require_once 'packages/blocks/src/Payments/PaylineRec.php';
-    }
+	if (!class_exists('WC_Block_Payline_CPT')) {
+		require_once 'includes/blocks/class-wc-blocs-payline-cpt.php';
+	}
 
-    if (!class_exists('PaylineNx')) {
-        require_once 'packages/blocks/src/Payments/PaylineNx.php';
-    }
+	if (!class_exists('WC_Block_Payline_NX')) {
+		require_once 'includes/blocks/class-wc-blocs-payline-nx.php';
+	}
+
+	if (!class_exists('WC_Block_Payline_REC')) {
+		require_once 'includes/blocks/class-wc-blocs-payline-rec.php';
+	}
 
 	require_once 'vendor/autoload.php';
 }
@@ -101,9 +105,9 @@ add_action('woocommerce_init', 'woocommerce_payline_init');
  * @return mixed
  */
 function woocommerce_payline_add_method($methods) {
-    $methods[] = 'PaylineCpt';
-    $methods[] = 'PaylineRec';
-    $methods[] = 'PaylineNx';
+    $methods[] = 'WC_Block_Payline_CPT';
+    $methods[] = 'WC_Block_Payline_REC';
+    $methods[] = 'WC_Block_Payline_NX';
     $methods[] = 'WC_Gateway_Payline';
     $methods[] = 'WC_Gateway_Payline_NX';
     $methods[] = 'WC_Gateway_Payline_REC';
@@ -221,9 +225,9 @@ function payline_register_payment_methods() {
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) {
-				$payment_method_registry->register( new PaylineRec );
-				$payment_method_registry->register( new PaylineCpt );
-				$payment_method_registry->register( new PaylineNx );
+				$payment_method_registry->register( new WC_Block_Payline_REC() );
+				$payment_method_registry->register( new WC_Block_Payline_CPT );
+				$payment_method_registry->register( new WC_Block_Payline_NX );
 			} );
 	}
 }

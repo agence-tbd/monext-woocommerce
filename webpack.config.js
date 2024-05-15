@@ -39,12 +39,12 @@ const requestToHandle = (request) => {
 module.exports = {
     ...defaultConfig,
     entry: {
-        'wc-payment-method-payline-cpt': './packages/blocks/assets/js/payment-method/payline-cpt/index.js',
-        'wc-payment-method-payline-rec': './packages/blocks/assets/js/payment-method/payline-rec/index.js',
-        'wc-payment-method-payline-nx': './packages/blocks/assets/js/payment-method/payline-nx/index.js',
+        'wc-payment-method-payline-cpt': './assets/js/payment-method/payline-cpt/index.js',
+        'wc-payment-method-payline-rec': './assets/js/payment-method/payline-rec/index.js',
+        'wc-payment-method-payline-nx': './assets/js/payment-method/payline-nx/index.js',
     },
     output: {
-        path: path.resolve( __dirname, './packages/blocks/build' ),
+        path: path.resolve( __dirname, './build' ),
         filename: '[name].js',
     },
     plugins: [
