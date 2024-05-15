@@ -7,7 +7,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
 	/**
 	 * @var string
 	 */
-	protected $settingsOptionName = '';
+	protected $settingsOptionName;
 
 	/**
 	 * @var bool
@@ -17,14 +17,19 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
 	/**
 	 * @var string
 	 */
-	protected $handle = '';
+	protected $handle;
+
+	/**
+	 * @var class-string
+	 */
+	protected $gatewayClass;
 
 	/**
 	 * Initializes the payment method type.
 	 */
 	public function initialize() {
 		$this->settings = get_option( $this->settingsOptionName, [] );
-//		$this->gateway  = new \WC_Gateway_Payline_NX();
+		$this->gateway  = new $this->gatewayClass;
 	}
 
 	/**

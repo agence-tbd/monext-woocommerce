@@ -58,11 +58,11 @@ function woocommerce_payline_init() {
 	load_plugin_textdomain('payline', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
     if ( ! class_exists( 'WC_Abstract_Payline', false ) ) {
-        include_once 'includes/class-wc-abstract-payline.php';
+        include_once 'includes/gateway/class-wc-gateway-abstract-payline.php';
     }
 
     if ( ! class_exists( 'WC_Abstract_Recurring_Payline_NX', false ) ) {
-        include_once 'includes/class-wc-abstract-recurring-payline.php';
+        include_once 'includes/gateway/class-wc-gateway-abstract-recurring-payline.php';
     }
 	
 	if (!class_exists('WC_Gateway_Payline')) {
