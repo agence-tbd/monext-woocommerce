@@ -9,6 +9,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     const BAD_CONNECT_SETTINGS_ERR = "Unauthorized";
     const BAD_PROXY_SETTINGS_ERR = "Could not connect to host";
 
+    const PAYLINE_DATE_FORMAT = 'd/m/Y H:i';
+
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
@@ -700,8 +702,60 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     }
 
 
-    protected function getTokenForOrder(WC_Order $order) {
+    protected function getTokenOptionKey(WC_Order $order) {
         return 'plnTokenForOrder_' . $order->get_id();
+    }
+
+
+    protected function getArrayTokenForOrder(WC_Order $order) {
+        $tokenOptionKey = $this->getTokenOptionKey($order);
+
+        $token = get_option($tokenOptionKey);
+        if (!empty($token)) {
+            if(is_string($token) && $tokenDecoded = json_decode($token, true)) {
+                if(is_array($tokenDecoded)) {
+                    return $tokenDecoded;
+                }
+            }
+        }
+
+        return null;
+    }
+
+
+    protected function getTokenForOrder(WC_Order $order, $available = false) {
+        $tokenDecoded = $this->getArrayTokenForOrder($order);
+        $token = $tokenDecoded['token'] ?? null;
+        if($token && !empty($tokenDecoded['date'])) {
+            $date = $tokenDecoded['date']   ?? 0;
+
+            $tokenAge = floor((strtotime(date(self::PAYLINE_DATE_FORMAT))-strtotime($date))/60);
+            if($available && $tokenAge>12) {
+                $token = null;
+            }
+        }
+
+        return $token;
+    }
+
+    protected function updateTokenForOrder(WC_Order $order, array $dwpResult) {
+        unset($dwpResult['result']);
+
+        $tokenOptionKey = $this->getTokenOptionKey($order);
+        if(!empty( $dwpResult['token'])) {
+            $dwpResult['date'] = date(self::PAYLINE_DATE_FORMAT);
+        } else {
+            $dwpResult['token'] = '';
+        }
+
+        if($tokenDecoded = $this->getArrayTokenForOrder($order)) {
+            $dwpResult['history'] = $tokenDecoded['history'] ?? [];
+            $dwpResult['history'][] = ['token'=>$tokenDecoded['token'], 'date'=>$tokenDecoded['date']];
+        }
+        $tokenEncoded = json_encode($dwpResult);
+
+
+        update_option($tokenOptionKey, $tokenEncoded);
     }
 
 
@@ -736,7 +790,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['order']['country'] = $order->get_billing_country();
         $doWebPaymentRequest['order']['taxes'] = round($order->get_total_tax());
         $doWebPaymentRequest['order']['amount'] = $doWebPaymentRequest['payment']['amount'];
-        $doWebPaymentRequest['order']['date'] = date('d/m/Y H:i');
+        $doWebPaymentRequest['order']['date'] = date(self::PAYLINE_DATE_FORMAT);
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
 
         // BUYER
@@ -857,7 +911,7 @@ cancelPaylinePayment = function ()
 
         $this->debug($requestParams, array(__METHOD__));
 
-        $tokenOptionKey = $this->getTokenForOrder($order);
+        $token = $this->getTokenForOrder($order, true);
 
         if ( preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match) ) {
             $widgetJS  =  PaylineSDK::PROD_WDGT_JS;
@@ -869,27 +923,22 @@ cancelPaylinePayment = function ()
             printf( '<script src="%s"></script>', $widgetJS);
             printf('<link href="%s" rel="stylesheet" />', $widgetCSS);
 
-            $token = NULL;
+
             // Prevent to send the request again on refresh.
-            if ( empty( $_GET['paylinetoken'] ) ) {
+            if ( !empty( $_GET['paylinetoken'] ) ) {
+                $token = $_GET['paylinetoken'];
+            } elseif ( !$token ) {
                 $result = $this->SDK->doWebPayment( $requestParams );
-
                 $this->debug($result, array(__METHOD__));
-
-
                 do_action( 'payline_after_do_web_payment', $result, $this );
 
                 if ( $result['result']['code'] === '00000' ) {
-                    // save association between order and payment session token
-                    update_option( $tokenOptionKey, $result['token'] );
+                    $this->updateTokenForOrder($order, $result);
                     $token = $result['token'];
                 } else {
                     echo '<div class="PaylineWidget"><p class="pl-message pl-message-error">' . sprintf( __( 'An error occured while displaying the payment form (error code %s : %s). Please contact us.', 'payline' ), $result['result']['code'], $result['result']['longMessage'] ) . '</p></div>';
                     exit;
                 }
-
-            } else {
-                $token = $_GET['paylinetoken'];
             }
 
             printf(
@@ -898,15 +947,14 @@ cancelPaylinePayment = function ()
                 $match[1]
             );
 
-
             echo '<script type="text/javascript">
             jQuery(document).ready(function($){
                 hideReceivedContext();
             });
             </script>
             <p></p><button onclick="javascript:cancelPaylinePayment()">' .
-            __('Cancel payment', 'payline') .
-            '</button></p>';
+                __('Cancel payment', 'payline') .
+                '</button></p>';
 
             exit;
         } else {
@@ -920,7 +968,10 @@ cancelPaylinePayment = function ()
 
             if ( $result['result']['code'] === '00000' ) {
                 // save association between order and payment session token so that the callback can check that the response is valid.
-                update_option( $tokenOptionKey, $result['token'] );
+                //update_option( $tokenOptionKey, $result['token'] );
+                $this->updateTokenForOrder($order, $result);
+
+
                 header( 'Location: ' . $result['redirectURL'] );
 
                 exit;
@@ -1024,13 +1075,28 @@ cancelPaylinePayment = function ()
         } else {
             $orderId = $res['order']['ref'];
             $order = wc_get_order($orderId);
-            $expectedToken = get_option($this->getTokenForOrder($order));
+            if(!$order) {
+                wp_redirect(wc_get_cart_url());
+                die();
+            }
+
+            if($urlType=='notification') {
+                //Nothing to do on notification if a transaction already exists for payline CPT
+                $transactionId = $order->get_transaction_id();
+                if($transactionId && $order->get_payment_method()=='payline') {
+                    die();
+                }
+            }
+
+            $expectedToken = $this->getTokenForOrder($order);
             if($expectedToken != $token){
                 $message = sprintf(__('Token %s does not match expected %s for order %s', 'payline'), wc_clean($token), $expectedToken, $orderId);
                 $this->SDK->getLogger()->error($message);
                 $order->add_order_note($message);
+                wp_redirect(wc_get_cart_url());
                 die($message);
             }
+
             do_action( $this->id . '_payment_callback', $res, $order );
 
             $message = $this->paylineManageReturn($order, $res);
