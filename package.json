@@ -12,11 +12,15 @@
   "devDependencies": {
     "@woocommerce/dependency-extraction-webpack-plugin": "^3.0.0",
     "@woocommerce/eslint-plugin": "^2.2.0",
-    "@wordpress/scripts": "^27.7.0"
+    "@wordpress/scripts": "^27.7.0",
+    "archiver": "^7.0.1",
+    "colors": "^1.4.0",
+    "shelljs": "^0.8.5"
   },
   "scripts": {
     "start": "wp-scripts start",
     "build": "wp-scripts build",
+    "build:release": "node tasks/release.js && mv release/*.zip .",
     "packages-update": "wp-scripts packages-update",
     "check-engines": "wp-scripts check-engines"
   }
