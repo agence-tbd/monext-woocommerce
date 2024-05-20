@@ -29,9 +29,6 @@
 */
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
-use Payline\Blocks\Payments\PaylineRec;
-use Payline\Blocks\Payments\PaylineCpt;
-use Payline\Blocks\Payments\PaylineNx;
 
 if (!defined('ABSPATH')) exit;
 
