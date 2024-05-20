@@ -20,9 +20,7 @@ build_job:
     - npm install
     - npm run build
     - npm run build:release
-    - ls -lisa
     - mv payline.zip $PAYLINE_ZIP_PACKAGE
-    - ls -lisa
   artifacts:
     paths:
       - $PAYLINE_ZIP_PACKAGE
