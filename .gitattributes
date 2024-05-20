@@ -8,3 +8,4 @@ composer.json export-ignore
 composer.lock export-ignore
 webpack.config.js export-ignore
 docs export-ignore
+task export-ignore
