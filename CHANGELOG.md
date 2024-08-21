@@ -1,9 +1,10 @@
 Changelog
 -------
 * 1.4.9 - 2024/05/06
-  *
+  * Reuse DWP token
+  * Avoid cancelling order on notification 
 
---
+---
 * 1.4.8 - 2024/04/19
   * Wallet activation
   * Fix warning on properies declaration
