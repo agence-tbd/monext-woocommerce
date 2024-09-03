@@ -654,16 +654,48 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         return parent::is_available();
     }
 
-    function process_payment($order_id) {
-        $order = wc_get_order($order_id);
-        return array(
-            'result' 	=> 'success',
-            'redirect'	=> add_query_arg('order-pay', $order->get_id(), $order->get_checkout_order_received_url()/*get_permalink(woocommerce_get_page_id('pay'))*/)
+	function process_payment($order_id) {
+		$order = wc_get_order($order_id);
+
+        if (preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match)) {
+            $redirect = add_query_arg('order-pay', $order->get_id(), $order->get_checkout_order_received_url()/*get_permalink(woocommerce_get_page_id('pay'))*/);
+        }else {
+	        $redirect = $this->getRawRedirectUrl($order->get_id());
+        }
+
+		return array(
+			'result' 	=> 'success',
+			'redirect'	=> $redirect
+		);
+	}
 
 
-        );
-    }
+	function getRawRedirectUrl($order_id) {
+		$order = wc_get_order($order_id);
 
+		$this->SDK = $this->getSDK();
+
+		$requestParams = $this->getWebPaymentRequest($order);
+
+		$result = $this->SDK->doWebPayment( $requestParams );
+
+		$this->debug($result, array(__METHOD__));
+
+		// Add payline_after_do_web_payment for widget
+		do_action( 'payline_after_do_web_payment', $result, $this );
+
+		if ( $result['result']['code'] === '00000' ) {
+			// save association between order and payment session token so that the callback can check that the response is valid.
+			//update_option( $tokenOptionKey, $result['token'] );
+			$this->updateTokenForOrder($order, $result);
+
+			return $result['redirectURL'];
+		}
+
+
+		$message = sprintf( __( 'You can\'t be redirected to payment page (error code ' . $result['result']['code'] . ' : ' . $result['result']['longMessage'] . '). Please contact us.', 'payline' ), 'Payline' );
+		return $this->get_error_payment_url($order, $message);
+	}
 
     /**
      * @return PaylineSDK
@@ -674,7 +706,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        $pathLog = trailingslashit(dirname(wc_get_log_file_path('payline'))) . trailingslashit('payline');
+	    $pathLog = trailingslashit( dirname( WC_Log_Handler_File::get_log_file_path( 'payline' ) ) ) . trailingslashit( 'payline' );
         if (!is_dir($pathLog)) {
             @mkdir($pathLog, 0777, true);
         }
