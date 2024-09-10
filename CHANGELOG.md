@@ -1,8 +1,12 @@
 Changelog
 -------
+* 1.5.0 - 2024/05/20
+  * Compatibility with the Cart and Checkout blocks
+
+---
 * 1.4.9 - 2024/05/06
   * Reuse DWP token
-  * Avoid cancelling order on notification 
+  * Avoid cancelling order on notification
 
 ---
 * 1.4.8 - 2024/04/19

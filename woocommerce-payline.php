@@ -3,7 +3,7 @@
  * Plugin Name: Payline
  * Plugin URI: https://docs.payline.com/display/DT/Plugin+WooCommerce
  * Description: integrations of Payline payment solution in your WooCommerce store
- * Version: 1.4.9
+ * Version: 1.5.0
  * Author: Monext
  * Text Domain: monext-online-woocommerce
  * Author URI: http://www.monext.fr
@@ -27,6 +27,11 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use Payline\Blocks\Payments\PaylineRec;
+use Payline\Blocks\Payments\PaylineCpt;
+use Payline\Blocks\Payments\PaylineNx;
 
 if (!defined('ABSPATH')) exit;
 
@@ -53,24 +58,40 @@ function woocommerce_payline_init() {
 	load_plugin_textdomain('payline', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 
     if ( ! class_exists( 'WC_Abstract_Payline', false ) ) {
-        include_once 'class-wc-abstract-payline.php';
+        include_once 'includes/gateway/class-wc-gateway-abstract-payline.php';
     }
 
     if ( ! class_exists( 'WC_Abstract_Recurring_Payline_NX', false ) ) {
-        include_once 'class-wc-abstract-recurring-payline.php';
+        include_once 'includes/gateway/class-wc-gateway-abstract-recurring-payline.php';
     }
 	
 	if (!class_exists('WC_Gateway_Payline')) {
-		require_once 'class-wc-gateway-payline.php';
+		require_once 'includes/gateway/class-wc-gateway-payline.php';
 	}
 
     if (!class_exists('WC_Gateway_Payline_NX')) {
-        require_once 'class-wc-gateway-payline-nx.php';
+        require_once 'includes/gateway/class-wc-gateway-payline-nx.php';
     }
 
     if (!class_exists('WC_Gateway_Payline_REC')) {
-        require_once 'class-wc-gateway-payline-rec.php';
+        require_once 'includes/gateway/class-wc-gateway-payline-rec.php';
     }
+
+	if (!class_exists('WC_Block_Abstract_Payline')) {
+		require_once 'includes/blocks/class-wc-blocs-abstract-payline.php';
+	}
+
+	if (!class_exists('WC_Block_Payline_CPT')) {
+		require_once 'includes/blocks/class-wc-blocs-payline-cpt.php';
+	}
+
+	if (!class_exists('WC_Block_Payline_NX')) {
+		require_once 'includes/blocks/class-wc-blocs-payline-nx.php';
+	}
+
+	if (!class_exists('WC_Block_Payline_REC')) {
+		require_once 'includes/blocks/class-wc-blocs-payline-rec.php';
+	}
 
 	require_once 'vendor/autoload.php';
 }
@@ -84,6 +105,9 @@ add_action('woocommerce_init', 'woocommerce_payline_init');
  * @return mixed
  */
 function woocommerce_payline_add_method($methods) {
+    $methods[] = 'WC_Block_Payline_CPT';
+    $methods[] = 'WC_Block_Payline_REC';
+    $methods[] = 'WC_Block_Payline_NX';
     $methods[] = 'WC_Gateway_Payline';
     $methods[] = 'WC_Gateway_Payline_NX';
     $methods[] = 'WC_Gateway_Payline_REC';
@@ -193,3 +217,17 @@ add_action( 'before_woocommerce_init', function() {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
     }
 } );
+
+add_action( 'woocommerce_blocks_loaded', 'payline_register_payment_methods' );
+
+function payline_register_payment_methods() {
+	if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+		add_action(
+			'woocommerce_blocks_payment_method_type_registration',
+			function ( PaymentMethodRegistry $payment_method_registry ) {
+				$payment_method_registry->register( new WC_Block_Payline_REC() );
+				$payment_method_registry->register( new WC_Block_Payline_CPT );
+				$payment_method_registry->register( new WC_Block_Payline_NX );
+			} );
+	}
+}
