@@ -654,16 +654,45 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         return parent::is_available();
     }
 
-    function process_payment($order_id) {
-        $order = wc_get_order($order_id);
-        return array(
-            'result' 	=> 'success',
-            'redirect'	=> add_query_arg('order-pay', $order->get_id(), $order->get_checkout_order_received_url()/*get_permalink(woocommerce_get_page_id('pay'))*/)
+	function process_payment($order_id) {
+		$order = wc_get_order($order_id);
+
+        if (preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match)) {
+            $redirect = add_query_arg('order-pay', $order->get_id(), $order->get_checkout_order_received_url()/*get_permalink(woocommerce_get_page_id('pay'))*/);
+        }else {
+	        $redirect = $this->getRawRedirectUrl($order->get_id());
+        }
+
+		return array(
+			'result' 	=> 'success',
+			'redirect'	=> $redirect
+		);
+	}
 
 
-        );
-    }
+	function getRawRedirectUrl($order_id) {
+		$order = wc_get_order($order_id);
 
+		$this->SDK = $this->getSDK();
+
+
+        $redirectURL = $this->getCachedDWPDataForOrder($order, 'redirectURL', true);
+
+        if ( !$redirectURL ) {
+            $requestParams = $this->getWebPaymentRequest($order);
+            $result = $this->SDK->doWebPayment( $requestParams );
+            $this->debug($result, array(__METHOD__));
+            do_action( 'payline_after_do_web_payment', $result, $this );
+
+            if ( $result['result']['code'] === '00000' ) {
+                $this->updateTokenForOrder($order, $result);
+                return $result['redirectURL'];
+            }
+        }
+
+        $message = sprintf( __( 'You can\'t be redirected to payment page (error code ' . $result['result']['code'] . ' : ' . $result['result']['longMessage'] . '). Please contact us.', 'payline' ), 'Payline' );
+		return $this->get_error_payment_url($order, $message);
+	}
 
     /**
      * @return PaylineSDK
@@ -674,7 +703,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        $pathLog = trailingslashit(dirname(wc_get_log_file_path('payline'))) . trailingslashit('payline');
+	    $pathLog = trailingslashit( dirname( WC_Log_Handler_File::get_log_file_path( 'payline' ) ) ) . trailingslashit( 'payline' );
         if (!is_dir($pathLog)) {
             @mkdir($pathLog, 0777, true);
         }
@@ -723,19 +752,21 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     }
 
 
-    protected function getTokenForOrder(WC_Order $order, $available = false) {
+    protected function getCachedDWPDataForOrder(WC_Order $order, $key= null, $available = false) {
         $tokenDecoded = $this->getArrayTokenForOrder($order);
+
         $token = $tokenDecoded['token'] ?? null;
         if($token && !empty($tokenDecoded['date'])) {
-            $date = $tokenDecoded['date']   ?? 0;
-
-            $tokenAge = floor((strtotime(date(self::PAYLINE_DATE_FORMAT))-strtotime($date))/60);
+            $tokenAge = floor((strtotime(date(self::PAYLINE_DATE_FORMAT))-strtotime($tokenDecoded['date']))/60);
             if($available && $tokenAge>12) {
-                $token = null;
+                $tokenDecoded = [];
             }
         }
 
-        return $token;
+        if($key) {
+            return $tokenDecoded[$key] ?? null;
+        }
+        return $tokenDecoded;
     }
 
     protected function updateTokenForOrder(WC_Order $order, array $dwpResult) {
@@ -911,7 +942,7 @@ cancelPaylinePayment = function ()
 
         $this->debug($requestParams, array(__METHOD__));
 
-        $token = $this->getTokenForOrder($order, true);
+        $token = $this->getCachedDWPDataForOrder($order, 'token', true);
 
         if ( preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match) ) {
             $widgetJS  =  PaylineSDK::PROD_WDGT_JS;
@@ -1088,7 +1119,7 @@ cancelPaylinePayment = function ()
                 }
             }
 
-            $expectedToken = $this->getTokenForOrder($order);
+            $expectedToken = $this->getCachedDWPDataForOrder($order, 'token');
             if($expectedToken != $token){
                 $message = sprintf(__('Token %s does not match expected %s for order %s', 'payline'), wc_clean($token), $expectedToken, $orderId);
                 $this->SDK->getLogger()->error($message);
