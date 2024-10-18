@@ -18,7 +18,7 @@
     "shelljs": "^0.8.5"
   },
   "scripts": {
-    "build": "npm run makepot && npm run build:webpack",
+    "build": "npm run build:webpack && build:release",
     "start:webpack": "wp-scripts start",
     "build:webpack": "wp-scripts build",
     "postbuild": "npm run -s && npm run archive",

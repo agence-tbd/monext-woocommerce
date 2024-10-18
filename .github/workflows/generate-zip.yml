@@ -1,9 +1,8 @@
 name: Generate ZIP file
 
 on:
-  push:
-    tags:
-      - 'v*'  # Déclenche sur les tags versionnés
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   generate-zip-file:
@@ -25,3 +24,9 @@ jobs:
         with:
           name: woocommerce-gateway-payline
           path: woocommerce-gateway-payline/
+
+
+# https://github.com/woocommerce/woocommerce-paypal-payments/   [NO tasks JS]
+# https://github.com/woocommerce/woocommerce-gateway-payfast/   [NO tasks JS]
+# https://github.com/woocommerce/woocommerce-gateway-stripe/    [tasks JS]
+# https://github.com/Automattic/woocommerce-payments            [tasks JS]
