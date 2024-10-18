@@ -25,11 +25,11 @@ jobs:
         run: npm install
 
       - name: Build project
-        run: npm run build && rm -rf ./release/payline && unzip woocommerce-gateway-payline.zip -d ./release/payline
+        run: npm run build && ls -lisa && rm -rf ./woocommerce-gateway-payline && unzip woocommerce-gateway-payline.zip -d ./woocommerce-gateway-payline
 
       - name: Use the Upload Artifact GitHub Action
         uses: actions/upload-artifact@v4
         with:
-          name: payline
-          path: ./release/
+          name: woocommerce-gateway-payline
+          path: ./woocommerce-gateway-payline
           retention-days: 1
