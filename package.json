@@ -18,16 +18,12 @@
     "shelljs": "^0.8.5"
   },
   "scripts": {
-    "build": "npm run build:webpack && npm run build:release",
+    "build": "npm run build:webpack",
     "start:webpack": "wp-scripts start",
     "build:webpack": "wp-scripts build",
     "postbuild": "npm run -s && npm run archive",
     "archive": "composer archive --file=$npm_package_name --format=zip",
     "postarchive": "rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "makepot": "wpi18n makepot --domain-path languages --pot-file $npm_package_name.pot --type plugin --main-file $npm_package_name.php --exclude node_modules,tests,docs",
-    "phpcs": "./vendor/bin/phpcs *.php includes -p",
-    "build:release": "node tasks/release.js && mv release/*.zip .",
-    "packages-update": "wp-scripts packages-update",
-    "check-engines": "wp-scripts check-engines"
+    "build:release": "node tasks/release.js && mv release/*.zip ."
   }
 }
