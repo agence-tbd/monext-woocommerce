@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-gateway-payline",
   "title": "WooCommerce Payline Payments",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "author": "Payline",
   "license": "GPL-3.0+",
   "keywords": [],
