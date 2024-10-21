@@ -39,13 +39,14 @@ jobs:
 #        run: rm -rf ./release && mkdir release && unzip woocommerce-gateway-payline.zip -d ./release/payline
         run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
 
-      - uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@v1.14.0
         name: Create GitHub Release
         with:
           name: ${{ inputs.release_name }}
           tag: ${{ inputs.version_number }}
 #          body: ${{ inputs.release_body }}
           bodyFile: "CHANGELOG.md"
-          prerelease: true
+          skipIfReleaseExists: true
+#          prerelease: true
           generateReleaseNotes: true
           artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip
