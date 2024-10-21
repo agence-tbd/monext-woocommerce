@@ -8,7 +8,7 @@ on:
 #      - github_action
   release:
     types:
-      - created  # Déclenchement lors de la création d'une release
+      - [created]  # Déclenchement lors de la création d'une release
 
 jobs:
   build:
