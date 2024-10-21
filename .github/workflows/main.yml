@@ -1,15 +1,5 @@
 name: Build for release
 
-#on:
-#  push:
-#    tags:
-#      - '*'
-#    branches:
-#      - github_action
-#  release:
-#    types: [created]  # Déclenchement lors de la création d'une release
-
-# Ce workflow peut être déclenché manuellement
 on:
   workflow_dispatch:
     inputs:
@@ -45,26 +35,17 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: List files
-        run: ls -lisa
-
       - name: Zip fix
 #        run: rm -rf ./release && mkdir release && unzip woocommerce-gateway-payline.zip -d ./release/payline
-        run: mv woocommerce-gateway-payline.zip woocommerce-gateway-payline${{ inputs.version_number }}.zip
-
-      - name: Use the Upload Artifact GitHub Action
-        uses: actions/upload-artifact@v4
-        with:
-          name: woocommerce-gateway-payline${{ inputs.version_number }}.zip
-          path: .
-          retention-days: 1
+        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
 
       - uses: ncipollo/release-action@v1
-        name: Create GitHub Release ncipollo
+        name: Create GitHub Release
         with:
           name: ${{ inputs.release_name }}
           tag: ${{ inputs.version_number }}
-          body: ${{ inputs.release_body }}
+#          body: ${{ inputs.release_body }}
+          bodyFile: "CHANGELOG.md"
           prerelease: true
           generateReleaseNotes: true
-          artifacts: woocommerce-gateway-payline${{ inputs.version_number }}.zip
+          artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip
