@@ -73,5 +73,5 @@ jobs:
         with:
           name: ${{ inputs.release_name }}
           tag: ${{ inputs.tag_name }}
-          bodyFile: ${{ inputs.release_body }}
+          body: ${{ inputs.release_body }}
           prerelease: true
