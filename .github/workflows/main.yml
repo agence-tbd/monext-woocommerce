@@ -13,14 +13,14 @@ name: Build for release
 on:
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: 'Nom du tag à créer'
+      version_number:
+        description: 'Numéro de version (peut contenir des points)'
         required: true
-        default: 'v1.0.0'
+        default: '1.0.0'
       release_name:
         description: 'Nom de la release'
         required: true
-        default: 'Version 1.0.0'
+        default: '1.0.0'
       release_body:
         description: 'Description de la release'
         required: false
@@ -34,44 +34,37 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
-#      - name: Setup node version
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version-file: '.nvmrc'
-#
-#      - name: Install dependencies
-#        run: npm install
-#
-#      - name: Build project
-#        run: npm run build
-#
-#      - name: List files
-#        run: ls -lisa
-#
-#      - name: Zip fix
-#        run: rm -rf ./release && mkdir release && unzip woocommerce-gateway-payline.zip -d ./release/payline
-#
-#      - name: Use the Upload Artifact GitHub Action
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: woocommerce-payline-v
-#          path: ./release
-#          retention-days: 1
+      - name: Setup node version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
 
-#      # 3. Créer une release associée au tag
-#      - name: Create GitHub Release
-#        uses: actions/create-release@v1
-#        with:
-#          tag_name: ${{ inputs.tag_name }}
-#          release_name: ${{ inputs.release_name }}
-#          body: ${{ inputs.release_body }}
-#          draft: false
-#          prerelease: false
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: List files
+        run: ls -lisa
+
+      - name: Zip fix
+#        run: rm -rf ./release && mkdir release && unzip woocommerce-gateway-payline.zip -d ./release/payline
+        run: mv woocommerce-gateway-payline.zip woocommerce-gateway-payline${{ inputs.version_number }}.zip
+
+      - name: Use the Upload Artifact GitHub Action
+        uses: actions/upload-artifact@v4
+        with:
+          name: woocommerce-gateway-payline${{ inputs.version_number }}.zip
+          path: .
+          retention-days: 1
 
       - uses: ncipollo/release-action@v1
         name: Create GitHub Release ncipollo
         with:
           name: ${{ inputs.release_name }}
-          tag: ${{ inputs.tag_name }}
+          tag: ${{ inputs.version_number }}
           body: ${{ inputs.release_body }}
           prerelease: true
+          generateReleaseNotes: true
+          artifacts: woocommerce-gateway-payline${{ inputs.version_number }}.zip
