@@ -1,16 +1,18 @@
 name: Build for release
 
 on:
-  release:
-    types:
-      - created  # Déclenchement lors de la création d'une release
-#  push:
+  push:
+    tags:
+      - '*'
 #    branches:
 #      - github_action
+#  release:
+#    types:
+#      - created  # Déclenchement lors de la création d'une release
 
 jobs:
   build:
-    name: Build
+    name: Build and Release
     runs-on: ubuntu-latest
     steps:
       - name: 🚚 Get latest code
@@ -36,6 +38,22 @@ jobs:
       - name: Use the Upload Artifact GitHub Action
         uses: actions/upload-artifact@v4
         with:
-          name: woocommerce-payline-v1.5.2
+          name: woocommerce-payline-v${{ github.ref }}
           path: ./release
           retention-days: 1
+
+#      - name: Create Release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ github.ref }}
+#          release_name: Release ${{ github.ref }}
+#          draft: false
+#          prerelease: false
+
+#      - name: Create Release
+#        uses: ncipollo/release-action@v1.14.0
+#        with:
+#          tag_name: ${{ github.ref }}
