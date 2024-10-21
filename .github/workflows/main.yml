@@ -1,14 +1,14 @@
 name: Build for release
 
 on:
-  push:
-    tags:
-      - '*'
+#  push:
+#    tags:
+#      - '*'
 #    branches:
 #      - github_action
-#  release:
-#    types:
-#      - created  # Déclenchement lors de la création d'une release
+  release:
+    types:
+      - created  # Déclenchement lors de la création d'une release
 
 jobs:
   build:
@@ -38,22 +38,15 @@ jobs:
       - name: Use the Upload Artifact GitHub Action
         uses: actions/upload-artifact@v4
         with:
-          name: woocommerce-payline-v${{ github.ref }}
+          name: woocommerce-payline-v
           path: ./release
           retention-days: 1
 
-#      - name: Create Release
-#        id: create_release
-#        uses: actions/create-release@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Upload release asset
+#        uses: actions/upload-release-asset@v1
 #        with:
-#          tag_name: ${{ github.ref }}
-#          release_name: Release ${{ github.ref }}
-#          draft: false
-#          prerelease: false
-
-#      - name: Create Release
-#        uses: ncipollo/release-action@v1.14.0
-#        with:
-#          tag_name: ${{ github.ref }}
+#          upload_url: ${{ github.event.release.upload_url }}
+#          asset_path: $PAYLINE_ZIP_PACKAGE
+#          asset_name: $PAYLINE_ZIP_PACKAGE
+#          asset_content_type: application/zip
