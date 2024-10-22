@@ -7,7 +7,6 @@ package-lock.json export-ignore
 composer.json export-ignore
 composer.lock export-ignore
 webpack.config.js export-ignore
-docs export-ignore
 tasks export-ignore
 node_modules export-ignore
 .nvmrc export-ignore
