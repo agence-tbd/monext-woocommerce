@@ -36,8 +36,7 @@ jobs:
         run: npm run build
 
       - name: Zip fix
-#        run: rm -rf ./release && mkdir release && unzip woocommerce-gateway-payline.zip -d ./release/payline
-        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
+#        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
 
       - uses: ncipollo/release-action@v1.14.0
         name: Create GitHub Release
@@ -49,4 +48,4 @@ jobs:
           skipIfReleaseExists: true
 #          prerelease: true
           generateReleaseNotes: true
-          artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip
+#          artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip

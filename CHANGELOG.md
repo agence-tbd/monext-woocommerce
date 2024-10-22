@@ -1,5 +1,9 @@
 Changelog
 -------
+## 1.5.1 - 2024/10/22
+  * Github
+
+---
 * 1.5.0 - 2024/05/20
   * Compatibility with the Cart and Checkout blocks
 
