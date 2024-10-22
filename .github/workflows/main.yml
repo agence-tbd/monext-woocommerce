@@ -35,7 +35,7 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Zip fix
+#      - name: Zip fix
 #        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
 
       - uses: ncipollo/release-action@v1.14.0
