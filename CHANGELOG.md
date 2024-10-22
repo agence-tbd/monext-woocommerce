@@ -1,5 +1,9 @@
 Changelog
 -------
+## 1.5.2 - 2024/10/22
+  * Github action changelog
+
+---
 ## 1.5.1 - 2024/10/22
   * Github
 

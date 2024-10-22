@@ -29,11 +29,11 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
+#      - name: Install dependencies
+#        run: npm install
+#
+#      - name: Build project
+#        run: npm run build
 
 #      - name: Zip fix
 #        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
