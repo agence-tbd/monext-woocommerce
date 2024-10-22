@@ -6,15 +6,11 @@ on:
       version_number:
         description: 'Numéro de version (peut contenir des points)'
         required: true
-        default: '1.0.0'
+#        default: '1.0.0'
       release_name:
         description: 'Nom de la release'
         required: true
-        default: '1.0.0'
-      release_body:
-        description: 'Description de la release'
-        required: false
-        default: 'Changelog de la version.'
+#        default: '1.0.0'
 
 jobs:
   build:
@@ -29,14 +25,14 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-#      - name: Install dependencies
-#        run: npm install
-#
-#      - name: Build project
-#        run: npm run build
+      - name: Install dependencies
+        run: npm install
 
-#      - name: Zip fix
-#        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
+      - name: Build project
+        run: npm run build
+
+      - name: Zip fix
+        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
 
       - uses: ncipollo/release-action@v1.14.0
         name: Create GitHub Release
@@ -44,8 +40,7 @@ jobs:
           name: ${{ inputs.release_name }}
           tag: ${{ inputs.version_number }}
 #          body: ${{ inputs.release_body }}
-          bodyFile: "CHANGELOG.md"
+#          bodyFile: "CHANGELOG.md"
           skipIfReleaseExists: true
-#          prerelease: true
           generateReleaseNotes: true
-#          artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip
+          artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip
