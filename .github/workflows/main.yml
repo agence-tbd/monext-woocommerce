@@ -1,0 +1,46 @@
+name: Build for release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_number:
+        description: 'Numéro de version (peut contenir des points)'
+        required: true
+      #        default: '1.0.0'
+      release_name:
+        description: 'Nom de la release'
+        required: true
+#        default: '1.0.0'
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: Setup node version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Zip fix
+        run: mv woocommerce-gateway-payline.zip woocommerce-payline_v${{ inputs.version_number }}.zip
+
+      - uses: ncipollo/release-action@v1.14.0
+        name: Create GitHub Release
+        with:
+          name: ${{ inputs.release_name }}
+          tag: ${{ inputs.version_number }}
+          #          body: ${{ inputs.release_body }}
+          #          bodyFile: "CHANGELOG.md"
+          skipIfReleaseExists: true
+          generateReleaseNotes: true
+          artifacts: woocommerce-payline_v${{ inputs.version_number }}.zip
