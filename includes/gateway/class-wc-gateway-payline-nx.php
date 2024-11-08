@@ -58,13 +58,11 @@ class WC_Gateway_Payline_NX extends WC_Abstract_Recurring_Payline_NX {
         $requestParams['recurring']['amount'] = $recurringAmount;
         $requestParams['recurring']['billingCycle'] = $this->settings['billing_cycle'];
 
-
-        $requestParams['recurring']['billingDay'] = '01'; //  [01 à 30]
-
         $numberDaysCycle = $this->getDaysForCycles($this->settings['billing_cycle']);
 
         //$today    = current_time( 'd/m/Y' );
         $requestParams['recurring']['startDate'] = current_datetime()->modify( '+' .$numberDaysCycle. ' day' )->format( 'd/m/Y' );; // dd/mm/yyyy
+	    $requestParams['recurring']['billingDay'] = current_datetime()->modify( '+' .$numberDaysCycle. ' day' )->format( 'd' );
 
         do_action('payline_before_do_web_payment_nx', $requestParams, $this);
 
