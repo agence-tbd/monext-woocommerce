@@ -1,7 +1,7 @@
 {
   "name": "woocommerce-gateway-payline",
   "title": "WooCommerce Payline Payments",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "author": "Payline",
   "license": "GPL-3.0+",
   "keywords": [],
@@ -18,10 +18,10 @@
     "shelljs": "^0.8.5"
   },
   "scripts": {
-    "start": "wp-scripts start",
-    "build": "wp-scripts build",
-    "build:release": "node tasks/release.js && mv release/*.zip .",
-    "packages-update": "wp-scripts packages-update",
-    "check-engines": "wp-scripts check-engines"
+    "build": "npm run build:webpack",
+    "start:webpack": "wp-scripts start",
+    "build:webpack": "wp-scripts build",
+    "postbuild": "npm run -s && npm run archive",
+    "archive": "composer archive --file=$npm_package_name --format=zip"
   }
 }
