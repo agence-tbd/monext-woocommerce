@@ -1,5 +1,9 @@
 Changelog
 -------
+* 1.5.2 - 2024/12/05
+  * Add Klarna payment compatibility
+
+---
 * 1.5.1 - 2024/10/24
   * Refund order on cancel status
 

@@ -50,12 +50,12 @@ Here are the main configuration fields for the payment method:
 
 ![Screenshot showing payment method configuration in backoffice](doc/config.png)
 
-* Base
+1. Base
     * Title
 
 ![Screenshot showing payment method configuration in backoffice](doc/config_base.png)
 
-* Acess:
+2. Acess:
     * Merchant ID
     * Access key
     * Environment
@@ -65,7 +65,7 @@ Here are the main configuration fields for the payment method:
         *
 ![Screenshot showing payment method configuration in backoffice](doc/config_access.png)
 
-* Settings
+3. Settings
     * Payment action
     * Widget integration mode
     * Main contract number
