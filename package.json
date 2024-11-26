@@ -22,6 +22,7 @@
     "start:webpack": "wp-scripts start",
     "build:webpack": "wp-scripts build",
     "postbuild": "npm run -s && npm run archive",
-    "archive": "composer archive --file=$npm_package_name --format=zip"
+    "archive": "composer archive --file=$npm_package_name --format=zip",
+    "release:gitlab": "node tasks/release.js && mv release/*.zip ."
   }
 }
