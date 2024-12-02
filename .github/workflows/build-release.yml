@@ -1,0 +1,35 @@
+name: Build package
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: Setup node version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Unzip in Payline folder
+        run: rm -rf ./payline && mkdir release && unzip woocommerce-gateway-payline.zip -d ./payline
+
+      - name: Repackage
+        run: zip -r woocommerce-payline_v${{ github.ref_name }}.zip ./payline
+
+      - name: Upload asset using gh CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZIP_PATH: woocommerce-payline_v${{ github.ref_name }}.zip
+        run: gh release upload ${{ github.event.release.tag_name }} $ZIP_PATH
