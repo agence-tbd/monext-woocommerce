@@ -691,7 +691,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             }
         }
 
-        $message = sprintf( __( 'You can\'t be redirected to payment page (error code ' . $result['result']['code'] . ' : ' . $result['result']['longMessage'] . '). Please contact us.', 'payline' ), 'Payline' );
+        $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ),  $result['result']['code'], $result['result']['longMessage']);
 		return $this->get_error_payment_url($order, $message);
 	}
 
@@ -1008,7 +1008,7 @@ cancelPaylinePayment = function ()
 
                 exit;
             } else {
-                $message = sprintf( __( 'You can\'t be redirected to payment page (error code ' . $result['result']['code'] . ' : ' . $result['result']['longMessage'] . '). Please contact us.', 'payline' ), 'Payline' );
+                $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ), $result['result']['code'],  $result['result']['longMessage']);
                 wp_redirect($this->get_error_payment_url($order, $message));
                 die();
             }

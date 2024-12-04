@@ -34,6 +34,8 @@ if (!defined('ABSPATH')) exit;
 
 define('WCPAYLINE_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+//require_once plugin_dir_path(__FILE__) . 'includes/admin/payline-logs-viewer.php';
+
 function woocommerce_payline_activation() {
 	if (!is_plugin_active('woocommerce/woocommerce.php')) {
 		deactivate_plugins(plugin_basename(__FILE__));
@@ -90,6 +92,10 @@ function woocommerce_payline_init() {
 		require_once 'includes/blocks/class-wc-blocs-payline-rec.php';
 	}
 
+	if (!class_exists('PaylineLogsViewer')) {
+		require_once 'includes/admin/payline-logs-viewer.php';
+	}
+
 	require_once 'vendor/autoload.php';
 }
 add_action('woocommerce_init', 'woocommerce_payline_init');
@@ -124,6 +130,7 @@ function woocommerce_payline_add_link($links, $file) {
 	$links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline').'">' . __('Settings CPT') .'</a><br />';
     $links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx').'">' . __('Settings NX') .'</a>';
     $links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec').'">' . __('Settings REC') .'</a>';
+    $links[] = '<a href="'.admin_url('tools.php?page=payline-logs').'">' . __('Logs Viewer') .'</a>';
 	return $links;
 }
 add_filter('plugin_action_links_'.plugin_basename(__FILE__), 'woocommerce_payline_add_link',  10, 2);
@@ -217,6 +224,12 @@ add_action( 'before_woocommerce_init', function() {
 
 add_action( 'woocommerce_blocks_loaded', 'payline_register_payment_methods' );
 
+/**
+ * Register Payline payment methods for Gutenberg blocks
+ *
+ * @return void
+ * @since 1.5.0
+ */
 function payline_register_payment_methods() {
 	if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
 		add_action(
@@ -228,3 +241,65 @@ function payline_register_payment_methods() {
 			} );
 	}
 }
+
+add_action('admin_menu', 'payline_add_logs_viewer_in_tools_submenu');
+
+/**
+ * Add Payline Logs Viewer in Tools submenu
+ *
+ * @return void
+ * @since 1.5.2
+ */
+function payline_add_logs_viewer_in_tools_submenu()
+{
+	add_management_page(
+		__('Payline Logs Viewer'),
+		__('Payline Logs Viewer'),
+		'manage_options',
+		'payline-logs',
+		['PaylineLogsViewer', 'showLogs']
+	);
+}
+
+add_action('admin_enqueue_scripts', 'payline_log_enqueue_admin_scripts');
+
+/**
+ * Add Payline JS in payline logs viewer page
+ *
+ * @param $hook_suffix
+ * @return void
+ * @since 1.5.2
+ */
+function payline_log_enqueue_admin_scripts( $hook_suffix ) {
+	if ( 'tools_page_payline-logs' === $hook_suffix ) {
+
+		wp_enqueue_script(
+			'logs-viewer-js',
+			WCPAYLINE_PLUGIN_URL . 'assets/js/admin/logs.js',
+			[ 'jquery' ],
+			'1.0',
+			true
+		);
+
+		wp_localize_script( 'logs-viewer-js', 'logs_viewer_js_data', array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
+	}
+}
+
+add_action( 'admin_enqueue_scripts', 'payline_log_enqueue_admin_styles');
+
+/**
+ * Add Payline CSS in payline logs viewer page
+ *
+ * @param $hook_suffix
+ * @return void
+ * @since 1.5.2
+ */
+function payline_log_enqueue_admin_styles( $hook_suffix ) {
+	if ( 'tools_page_payline-logs' === $hook_suffix ) {
+		wp_register_style( 'payline_admin_styles', WCPAYLINE_PLUGIN_URL . 'assets/css/admin.css' );
+		wp_enqueue_style( 'payline_admin_styles' );
+	}
+}
+
+add_action('wp_ajax_load_log', array( 'PaylineLogsViewer', 'doAjaxGetLogs' ));
+add_action('wp_ajax_nopriv_load_log', array( 'PaylineLogsViewer', 'doAjaxGetLogs' ));

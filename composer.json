@@ -1,5 +1,6 @@
 {
   "require": {
-    "monext/payline-sdk": "4.76"
+    "monext/payline-sdk": "4.76",
+    "ddtraceweb/monolog-parser": "^1.3"
   }
 }
