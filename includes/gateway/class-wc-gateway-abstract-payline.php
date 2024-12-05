@@ -675,9 +675,11 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 		$order = wc_get_order($order_id);
 
 		$this->SDK = $this->getSDK();
-
-
         $redirectURL = $this->getCachedDWPDataForOrder($order, 'redirectURL', true);
+
+
+        $errorCode = $this->SDK::ERR_CODE;
+        $errorMsg  = $this->SDK::ERR_SHORT_MESSAGE;
 
         if ( !$redirectURL ) {
             $requestParams = $this->getWebPaymentRequest($order);
@@ -688,10 +690,13 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             if ( $result['result']['code'] === '00000' ) {
                 $this->updateTokenForOrder($order, $result);
                 return $result['redirectURL'];
+            } else {
+                $errorCode = $result['result']['code'];
+                $errorMsg  = $result['result']['longMessage'];
             }
         }
 
-        $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ),  $result['result']['code'], $result['result']['longMessage']);
+        $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ),  $errorCode, $errorMsg);
 		return $this->get_error_payment_url($order, $message);
 	}
 
@@ -820,10 +825,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
         $doWebPaymentRequest['order']['ref'] = $this->cleanSubstr($order->get_id(), 0, 50);
         $doWebPaymentRequest['order']['country'] = $order->get_billing_country();
-        $doWebPaymentRequest['order']['taxes'] = round($order->get_total_tax());
+        $doWebPaymentRequest['order']['taxes'] = round(($order->get_total_tax() - $order->get_shipping_tax()) * 100);
         $doWebPaymentRequest['order']['amount'] = $doWebPaymentRequest['payment']['amount'];
         $doWebPaymentRequest['order']['date'] = date(self::PAYLINE_DATE_FORMAT);
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
+        $doWebPaymentRequest['order']['deliveryCharge'] = round(($order->get_shipping_total() + $order->get_shipping_tax()) * 100);
+        //$doWebPaymentRequest['order']['discountAmount'] = round(($order->get_discount_total() + $order->get_discount_tax()) * 100);
 
         // BUYER
         // TODO: Default value
@@ -860,25 +867,48 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $doWebPaymentRequest['shippingAddress']['name'] .= ' (' . $order->get_shipping_company() . ')';
         }
         $doWebPaymentRequest['shippingAddress']['name'] = $this->cleanSubstr($doWebPaymentRequest['shippingAddress']['name'], 0, 100);
-        $doWebPaymentRequest['shippingAddress']['firstName'] = $this->cleanSubstr($order->get_shipping_first_name(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['lastName'] = $this->cleanSubstr($order->get_shipping_last_name(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['street1'] = $this->cleanSubstr($order->get_shipping_address_1(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['street2'] = $this->cleanSubstr($order->get_shipping_address_2(), 0, 100);
-        $doWebPaymentRequest['shippingAddress']['cityName'] = $this->cleanSubstr($order->get_shipping_city(), 0, 40);
-        $doWebPaymentRequest['shippingAddress']['zipCode'] = $this->cleanSubstr($order->get_shipping_postcode(), 0, 20);
-        $doWebPaymentRequest['shippingAddress']['country'] = $order->get_shipping_country();
+        $doWebPaymentRequest['shippingAddress']['firstName'] = $this->cleanSubstr($order->get_shipping_first_name()?: $order->get_billing_first_name(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['lastName'] = $this->cleanSubstr($order->get_shipping_last_name()?: $order->get_billing_last_name(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['street1'] = $this->cleanSubstr($order->get_shipping_address_1()?: $order->get_billing_address_1(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['street2'] = $this->cleanSubstr($order->get_shipping_address_2()?: $order->get_billing_address_2(), 0, 100);
+        $doWebPaymentRequest['shippingAddress']['cityName'] = $this->cleanSubstr($order->get_shipping_city()?: $order->get_billing_city(), 0, 40);
+        $doWebPaymentRequest['shippingAddress']['zipCode'] = $this->cleanSubstr($order->get_shipping_postcode()?: $order->get_billing_postcode(), 0, 20);
+        $doWebPaymentRequest['shippingAddress']['country'] = $order->get_shipping_country()?: $order->get_billing_country();
         $doWebPaymentRequest['shippingAddress']['phone'] = '';
 
+        $totalOrderLines = 0;
         // ORDER DETAILS
         $items = $order->get_items();
-        foreach ($items as $item) {
-            $this->SDK->addOrderDetail(array(
+        /** @var WC_Order_Item_Product $item */
+	    foreach ($items as $item) {
+            $orderLine = array(
                 'ref' => $this->cleanSubstr($item['name'], 0, 50),
-                'price' => round($item['line_total'] * 100),
-                'quantity' => $item['qty'],
-                'comment' => ''
-            ));
+                'price' => round(($item->get_subtotal() + $item->get_subtotal_tax())/$item['qty'],2) * 100,
+                'quantity' => (int)$item['qty'],
+                'comment' => (string)$item['name'],
+                'taxRate' => round(($item['total_tax'] / $item['total']) * 100 * 100)
+            );
+            $this->SDK->addOrderDetail($orderLine);
+
+            $totalOrderLines+=$orderLine['price'] * $orderLine['quantity'];
         }
+
+        //Allow Klarna with cart discount
+        //$adjustment = $doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge'] - $doWebPaymentRequest['order']['discountAmount'];
+        $adjustment = $doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge'];
+        if ($adjustment) {
+            $prixHT = ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total());
+		    $taxRate = round(($order->get_cart_tax() / $prixHT) * 100 * 100);
+
+		    $this->SDK->addOrderDetail(array(
+			    'ref' => 'CART_DISCOUNT',
+			    'price' => $adjustment,
+			    'quantity' => 1,
+			    'comment' => 'Cart amount adjustment',
+			    'category' =>  'main',
+			    'taxRate' => $taxRate
+		    ));
+	    }
 
         // TRANSACTION OPTIONS
         $doWebPaymentRequest['notificationURL'] = $this->get_request_url('notification');

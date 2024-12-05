@@ -2,6 +2,7 @@ Changelog
 -------
 * 1.5.2 - 2024/12/05
   * Add Klarna payment compatibility
+  * Add log visibility in backoffice
 
 ---
 * 1.5.1 - 2024/10/24
