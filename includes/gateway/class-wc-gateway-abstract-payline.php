@@ -12,6 +12,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     const PAYLINE_DATE_FORMAT = 'd/m/Y H:i';
 
+    /**
+     * https://docs.payline.com/display/DT/Codes+-+Title
+     * @var string
+     */
+    const DEFAULT_USER_TITLE = '4'; // M. / Monsieur
+
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
@@ -829,12 +835,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['order']['amount'] = $doWebPaymentRequest['payment']['amount'];
         $doWebPaymentRequest['order']['date'] = date(self::PAYLINE_DATE_FORMAT);
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
-        $doWebPaymentRequest['order']['deliveryCharge'] = round(($order->get_shipping_total() + $order->get_shipping_tax()) * 100);
-        //$doWebPaymentRequest['order']['discountAmount'] = round(($order->get_discount_total() + $order->get_discount_tax()) * 100);
+        $doWebPaymentRequest['order']['deliveryMode'] = 1;
 
         // BUYER
-        // TODO: Default value
-        $doWebPaymentRequest['buyer']['title'] = '4'; //M. / Monsieur
+        $doWebPaymentRequest['buyer']['title'] = self::DEFAULT_USER_TITLE ;
 
         $doWebPaymentRequest['buyer']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
         $doWebPaymentRequest['buyer']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
@@ -847,6 +851,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         }
 
         // BILLING ADDRESS
+        $doWebPaymentRequest['billingAddress']['title'] = self::DEFAULT_USER_TITLE ;
         $doWebPaymentRequest['billingAddress']['name'] = $order->get_billing_first_name() . " " . $order->get_billing_last_name();
         if ($order->get_billing_company() != null && strlen($order->get_billing_company()) > 0) {
             $doWebPaymentRequest['billingAddress']['name'] .= ' (' . $order->get_billing_company() . ')';
@@ -859,6 +864,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['billingAddress']['cityName'] = $this->cleanSubstr($order->get_billing_city(), 0, 40);
         $doWebPaymentRequest['billingAddress']['zipCode'] = $this->cleanSubstr($order->get_billing_postcode(), 0, 20);
         $doWebPaymentRequest['billingAddress']['country'] = $order->get_billing_country();
+        $doWebPaymentRequest['billingAddress']['phoneType'] = 1;
         $doWebPaymentRequest['billingAddress']['phone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
 
         // SHIPPING ADDRESS
@@ -866,6 +872,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         if ($order->get_shipping_company() != null && strlen($order->get_shipping_company()) > 0) {
             $doWebPaymentRequest['shippingAddress']['name'] .= ' (' . $order->get_shipping_company() . ')';
         }
+
         $doWebPaymentRequest['shippingAddress']['name'] = $this->cleanSubstr($doWebPaymentRequest['shippingAddress']['name'], 0, 100);
         $doWebPaymentRequest['shippingAddress']['firstName'] = $this->cleanSubstr($order->get_shipping_first_name()?: $order->get_billing_first_name(), 0, 100);
         $doWebPaymentRequest['shippingAddress']['lastName'] = $this->cleanSubstr($order->get_shipping_last_name()?: $order->get_billing_last_name(), 0, 100);
@@ -874,7 +881,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['shippingAddress']['cityName'] = $this->cleanSubstr($order->get_shipping_city()?: $order->get_billing_city(), 0, 40);
         $doWebPaymentRequest['shippingAddress']['zipCode'] = $this->cleanSubstr($order->get_shipping_postcode()?: $order->get_billing_postcode(), 0, 20);
         $doWebPaymentRequest['shippingAddress']['country'] = $order->get_shipping_country()?: $order->get_billing_country();
-        $doWebPaymentRequest['shippingAddress']['phone'] = '';
+        $doWebPaymentRequest['shippingAddress']['phone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_shipping_phone()), 0, 15);
+	    $doWebPaymentRequest['shippingAddress']['phoneType'] = 1;
 
         $totalOrderLines = 0;
         // ORDER DETAILS
@@ -909,6 +917,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 			    'taxRate' => $taxRate
 		    ));
 	    }
+
+	    $this->SDK->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
 
         // TRANSACTION OPTIONS
         $doWebPaymentRequest['notificationURL'] = $this->get_request_url('notification');
