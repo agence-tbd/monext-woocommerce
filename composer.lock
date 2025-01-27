@@ -4,8 +4,50 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7d552e44207e43ce29e27ba6765acf12",
+    "content-hash": "5bd2b19befdfc2d7130899f2456702be",
     "packages": [
+        {
+            "name": "ddtraceweb/monolog-parser",
+            "version": "1.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ddtraceweb/monolog-parser.git",
+                "reference": "d6715cb28700d691b20d713626856aacd3d5606c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ddtraceweb/monolog-parser/zipball/d6715cb28700d691b20d713626856aacd3d5606c",
+                "reference": "d6715cb28700d691b20d713626856aacd3d5606c",
+                "shasum": ""
+            },
+            "require": {
+                "monolog/monolog": "1.*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "3.7.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Dubture": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Robert Gruendler",
+                    "email": "r.gruendler@gmail.com"
+                }
+            ],
+            "description": "A parser for monolog log entries",
+            "support": {
+                "source": "https://github.com/ddtraceweb/monolog-parser/tree/master"
+            },
+            "time": "2020-07-23T13:38:12+00:00"
+        },
         {
             "name": "monext/payline-sdk",
             "version": "4.76",
@@ -444,5 +486,5 @@
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "plugin-api-version": "2.6.0"
 }
