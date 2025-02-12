@@ -1188,9 +1188,14 @@ cancelPaylinePayment = function ()
             if($urlType=='notification') {
                 //Nothing to do on notification if a transaction already exists for payline CPT
                 $transactionId = $order->get_transaction_id();
-                if($transactionId && $order->get_payment_method()=='payline') {
-                    die();
-                }
+	            $paymentMethod = $order->get_payment_method();
+	            if ($transactionId && $paymentMethod == 'payline') {
+		            die();
+	            }
+
+	            if (!empty($paymentMethod) && $paymentMethod != 'payline'){
+		            die();
+	            }
             }
 
             $expectedToken = $this->getCachedDWPDataForOrder($order, 'token');
