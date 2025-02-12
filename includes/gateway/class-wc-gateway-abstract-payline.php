@@ -424,6 +424,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             'description' => __('Payline destination environement of your requests', 'payline')
         );
 
+	    $this->form_fields['smartdisplay_parameter'] = array(
+		    'title' => __('Smartdisplay parameter', 'payline'),
+		    'type' => 'text',
+		    'description' => __('Added in doWebPayment privateData as display.rule.param', 'payline')
+	    );
+
         /*
          * Proxy Settings
          */
@@ -918,7 +924,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 		    ));
 	    }
 
-	    $this->SDK->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
+        $this->SDK->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
+        if($this->settings['smartdisplay_parameter'] != null){
+            $this->SDK->addPrivateData(array('key' => 'display.rule.param', 'value' => $this->settings['smartdisplay_parameter']));
+        }
 
         // TRANSACTION OPTIONS
         $doWebPaymentRequest['notificationURL'] = $this->get_request_url('notification');
