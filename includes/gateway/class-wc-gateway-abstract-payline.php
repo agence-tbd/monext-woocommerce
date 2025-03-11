@@ -841,6 +841,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['order']['amount'] = $doWebPaymentRequest['payment']['amount'];
         $doWebPaymentRequest['order']['date'] = date(self::PAYLINE_DATE_FORMAT);
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
+        $doWebPaymentRequest['order']['deliveryCharge'] = round(($order->get_shipping_total() + $order->get_shipping_tax()) * 100);
         $doWebPaymentRequest['order']['deliveryMode'] = 1;
 
         // BUYER
@@ -908,8 +909,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         }
 
         //Allow Klarna with cart discount
-        //$adjustment = $doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge'] - $doWebPaymentRequest['order']['discountAmount'];
-        $adjustment = $doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge'];
+        //Round $adjustment to avoid php biais as 4.5474735088646E-13 ( https://github.com/Monext/monext-woocommerce/issues/5 )
+        $adjustment = round($doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge']);
         if ($adjustment) {
             $prixHT = ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total());
 		    $taxRate = round(($order->get_cart_tax() / $prixHT) * 100 * 100);
