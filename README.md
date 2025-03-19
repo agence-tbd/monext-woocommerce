@@ -38,7 +38,8 @@ You can also check [our documentation](https://docs.monext.fr/display/DT/Payment
 
 ### Requirements
 
-No more requirements than Woocommerce.
+Theme need to be fully compatible with Woocommerce
+![Screenshot showing theme compatibility in backoffice](doc/requirement_theme.png)
 
 ### Installation process
 
