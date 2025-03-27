@@ -610,6 +610,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             echo "<div class='inline error'>$this->disp_errors</div>";
         }
 
+	    echo "<div class='inline notice notice-info'><strong>URL notification : </strong>".$this->get_request_url('notification')."</div>";
+
         ?>
 
         <table class="form-table">
