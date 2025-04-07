@@ -1,5 +1,12 @@
 Changelog
 -------
+* 1.5.3 - 2025/03/12
+  * Add Floa payment compatibility
+  * Fix unwanted cancelled order on notification, Fix #3
+  * Add display.rule.param in configuration to use in Smartdisplay
+  * Adjustment bias error, Fix #5
+
+---
 * 1.5.2 - 2024/12/05
   * Add Klarna payment compatibility
   * Add log visibility in backoffice

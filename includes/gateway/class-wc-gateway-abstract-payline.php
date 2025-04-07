@@ -12,6 +12,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     const PAYLINE_DATE_FORMAT = 'd/m/Y H:i';
 
+    /**
+     * https://docs.payline.com/display/DT/Codes+-+Title
+     * @var string
+     */
+    const DEFAULT_USER_TITLE = '4'; // M. / Monsieur
+
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
@@ -19,7 +25,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.5.2';
+    protected $extensionVersion = '1.5.3';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 26;
@@ -417,6 +423,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             ),
             'description' => __('Payline destination environement of your requests', 'payline')
         );
+
+	    $this->form_fields['smartdisplay_parameter'] = array(
+		    'title' => __('Smartdisplay parameter', 'payline'),
+		    'type' => 'text',
+		    'description' => __('Added in doWebPayment privateData as display.rule.param', 'payline')
+	    );
 
         /*
          * Proxy Settings
@@ -830,11 +842,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['order']['date'] = date(self::PAYLINE_DATE_FORMAT);
         $doWebPaymentRequest['order']['currency'] = $doWebPaymentRequest['payment']['currency'];
         $doWebPaymentRequest['order']['deliveryCharge'] = round(($order->get_shipping_total() + $order->get_shipping_tax()) * 100);
-        //$doWebPaymentRequest['order']['discountAmount'] = round(($order->get_discount_total() + $order->get_discount_tax()) * 100);
+        $doWebPaymentRequest['order']['deliveryMode'] = 1;
 
         // BUYER
-        // TODO: Default value
-        $doWebPaymentRequest['buyer']['title'] = '4'; //M. / Monsieur
+        $doWebPaymentRequest['buyer']['title'] = self::DEFAULT_USER_TITLE ;
 
         $doWebPaymentRequest['buyer']['lastName'] = $this->cleanSubstr($order->get_billing_last_name(), 0, 100);
         $doWebPaymentRequest['buyer']['firstName'] = $this->cleanSubstr($order->get_billing_first_name(), 0, 100);
@@ -847,6 +858,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         }
 
         // BILLING ADDRESS
+        $doWebPaymentRequest['billingAddress']['title'] = self::DEFAULT_USER_TITLE ;
         $doWebPaymentRequest['billingAddress']['name'] = $order->get_billing_first_name() . " " . $order->get_billing_last_name();
         if ($order->get_billing_company() != null && strlen($order->get_billing_company()) > 0) {
             $doWebPaymentRequest['billingAddress']['name'] .= ' (' . $order->get_billing_company() . ')';
@@ -859,6 +871,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['billingAddress']['cityName'] = $this->cleanSubstr($order->get_billing_city(), 0, 40);
         $doWebPaymentRequest['billingAddress']['zipCode'] = $this->cleanSubstr($order->get_billing_postcode(), 0, 20);
         $doWebPaymentRequest['billingAddress']['country'] = $order->get_billing_country();
+        $doWebPaymentRequest['billingAddress']['phoneType'] = 1;
         $doWebPaymentRequest['billingAddress']['phone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_billing_phone()), 0, 15);
 
         // SHIPPING ADDRESS
@@ -866,6 +879,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         if ($order->get_shipping_company() != null && strlen($order->get_shipping_company()) > 0) {
             $doWebPaymentRequest['shippingAddress']['name'] .= ' (' . $order->get_shipping_company() . ')';
         }
+
         $doWebPaymentRequest['shippingAddress']['name'] = $this->cleanSubstr($doWebPaymentRequest['shippingAddress']['name'], 0, 100);
         $doWebPaymentRequest['shippingAddress']['firstName'] = $this->cleanSubstr($order->get_shipping_first_name()?: $order->get_billing_first_name(), 0, 100);
         $doWebPaymentRequest['shippingAddress']['lastName'] = $this->cleanSubstr($order->get_shipping_last_name()?: $order->get_billing_last_name(), 0, 100);
@@ -874,7 +888,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['shippingAddress']['cityName'] = $this->cleanSubstr($order->get_shipping_city()?: $order->get_billing_city(), 0, 40);
         $doWebPaymentRequest['shippingAddress']['zipCode'] = $this->cleanSubstr($order->get_shipping_postcode()?: $order->get_billing_postcode(), 0, 20);
         $doWebPaymentRequest['shippingAddress']['country'] = $order->get_shipping_country()?: $order->get_billing_country();
-        $doWebPaymentRequest['shippingAddress']['phone'] = '';
+        $doWebPaymentRequest['shippingAddress']['phone'] = $this->cleanSubstr(preg_replace("/[^0-9.]/", '', $order->get_shipping_phone()), 0, 15);
+	    $doWebPaymentRequest['shippingAddress']['phoneType'] = 1;
 
         $totalOrderLines = 0;
         // ORDER DETAILS
@@ -894,8 +909,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         }
 
         //Allow Klarna with cart discount
-        //$adjustment = $doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge'] - $doWebPaymentRequest['order']['discountAmount'];
-        $adjustment = $doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge'];
+        //Round $adjustment to avoid php biais as 4.5474735088646E-13 ( https://github.com/Monext/monext-woocommerce/issues/5 )
+        $adjustment = round($doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge']);
         if ($adjustment) {
             $prixHT = ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total());
 		    $taxRate = round(($order->get_cart_tax() / $prixHT) * 100 * 100);
@@ -909,6 +924,11 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 			    'taxRate' => $taxRate
 		    ));
 	    }
+
+        $this->SDK->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
+        if($this->settings['smartdisplay_parameter'] != null){
+            $this->SDK->addPrivateData(array('key' => 'display.rule.param', 'value' => $this->settings['smartdisplay_parameter']));
+        }
 
         // TRANSACTION OPTIONS
         $doWebPaymentRequest['notificationURL'] = $this->get_request_url('notification');
@@ -1169,9 +1189,14 @@ cancelPaylinePayment = function ()
             if($urlType=='notification') {
                 //Nothing to do on notification if a transaction already exists for payline CPT
                 $transactionId = $order->get_transaction_id();
-                if($transactionId && $order->get_payment_method()=='payline') {
-                    die();
-                }
+	            $paymentMethod = $order->get_payment_method();
+	            if ($transactionId && $paymentMethod == 'payline') {
+		            die();
+	            }
+
+	            if (!empty($paymentMethod) && $paymentMethod != 'payline'){
+		            die();
+	            }
             }
 
             $expectedToken = $this->getCachedDWPDataForOrder($order, 'token');
