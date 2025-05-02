@@ -528,6 +528,28 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             'type' => 'text',
             'description' => __('Contracts displayed for payment retry. Values must be separated by ;', 'payline')
         );
+	    /*
+		 * Error message
+		 */
+	    $this->form_fields['error_messages'] = array(
+		    'title' => __( 'ERROR MESSAGES', 'payline' ),
+		    'type' => 'title'
+	    );
+	    $this->form_fields['user_error_message_refused'] = array(
+		    'title' => __('Type Refused', 'payline'),
+		    'type' => 'text',
+		    'default' => __('Your payment has been refused', 'payline')
+	    );
+	    $this->form_fields['user_error_message_cancelled'] = array(
+		    'title' => __('Type Cancelled', 'payline'),
+		    'type' => 'text',
+		    'default' => __('Your payment has been cancelled', 'payline')
+	    );
+	    $this->form_fields['user_error_message_error'] = array(
+		    'title' => __('Type Error', 'payline'),
+		    'type' => 'text',
+		    'default' => __('Your payment is in error', 'payline')
+	    );
     }
 
 
@@ -1215,7 +1237,7 @@ cancelPaylinePayment = function ()
             $message = $this->paylineManageReturn($order, $res);
 
             $redirectUrl = $this->get_return_url($order);
-            if(in_array($order->get_status(), array('failed', 'cancelled'))) {
+            if(in_array($order->get_status(), array('refused', 'cancelled', 'error'))) {
                 $redirectUrl = $this->get_error_payment_url($order, $message);
             }
 
@@ -1251,24 +1273,22 @@ cancelPaylinePayment = function ()
         } else {
             if($this->paylineCancelWebPaymentDetails($order, $res)) {
 
-            } elseif ($res['result']['code'] == '02319' || $res['result']['code'] == '02014'){
-                $message = __('Buyer cancelled his payment', 'payline');
-                $status = 'cancelled';
-            } elseif ($res['result']['code'] == '02304' || $res['result']['code'] == '02324'){
-                $message = __('Payment session expired without transaction', 'payline');
-                $status = 'cancelled';
-
-            }elseif ($res['result']['code'] == '02534' || $res['result']['code'] == '02324'){
-                $message = __('Payment session expired with no redirection on payment page', 'payline');
-                $status = 'cancelled';
             } else {
                 if($res['transaction']['id']){
                     //Implicit save with update_status cause $status is set on 'failed'
                     $order->update_meta_data('Transaction ID', $res['transaction']['id']);
                 }
-                $message = sprintf( __('Payment refused (code %s: %s)','payline'), $res['result']['code'], $res['result']['longMessage']);
-                $status = 'failed';
             }
+
+            $status = strtolower($res['result']['shortMessage']);
+	        if(in_array($status,['refused', 'cancelled', 'error'])) {
+                $settingKey = 'user_error_message_'.$status;
+		        $message = $this->settings[$settingKey];
+                if(empty($message)){
+	                $message = $this->form_fields[$settingKey]['default'];
+                }
+            }
+
             if($status) {
                 $order->update_status($status, $message);
             }
