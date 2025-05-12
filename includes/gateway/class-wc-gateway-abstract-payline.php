@@ -712,24 +712,21 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
 		$this->SDK = $this->getSDK();
         $redirectURL = $this->getCachedDWPDataForOrder($order, 'redirectURL', true);
+        if($redirectURL) {
+            return $redirectURL;
+        }
 
+        $requestParams = $this->getWebPaymentRequest($order);
+        $result = $this->SDK->doWebPayment( $requestParams );
+        $this->debug($result, array(__METHOD__));
+        do_action( 'payline_after_do_web_payment', $result, $this );
 
-        $errorCode = $this->SDK::ERR_CODE;
-        $errorMsg  = $this->SDK::ERR_SHORT_MESSAGE;
-
-        if ( !$redirectURL ) {
-            $requestParams = $this->getWebPaymentRequest($order);
-            $result = $this->SDK->doWebPayment( $requestParams );
-            $this->debug($result, array(__METHOD__));
-            do_action( 'payline_after_do_web_payment', $result, $this );
-
-            if ( $result['result']['code'] === '00000' ) {
-                $this->updateTokenForOrder($order, $result);
-                return $result['redirectURL'];
-            } else {
-                $errorCode = $result['result']['code'];
-                $errorMsg  = $result['result']['longMessage'];
-            }
+        if ( $result['result']['code'] === '00000' ) {
+            $this->updateTokenForOrder($order, $result);
+            return $result['redirectURL'];
+        } else {
+            $errorCode = $result['result']['code'];
+            $errorMsg  = $result['result']['longMessage'];
         }
 
         $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ),  $errorCode, $errorMsg);
@@ -1237,7 +1234,9 @@ cancelPaylinePayment = function ()
             $message = $this->paylineManageReturn($order, $res);
 
             $redirectUrl = $this->get_return_url($order);
-            if(in_array($order->get_status(), array('refused', 'cancelled', 'error'))) {
+            if(in_array($order->get_status(), array('failed', 'cancelled'))) {
+                //Reset Old token on error
+                $this->updateTokenForOrder($order, []);
                 $redirectUrl = $this->get_error_payment_url($order, $message);
             }
 

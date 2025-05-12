@@ -24,6 +24,10 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
 	 */
 	protected $gatewayClass;
 
+
+    protected $gateway;
+
+
 	/**
 	 * Initializes the payment method type.
 	 */
