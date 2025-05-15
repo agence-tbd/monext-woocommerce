@@ -1289,7 +1289,8 @@ cancelPaylinePayment = function ()
             }
 
             if($status) {
-                $order->update_status($status, $message);
+                $orderStatus = ($status == 'cancelled') ? $status : "failed";
+                $order->update_status($orderStatus, $message);
             }
         }
 
