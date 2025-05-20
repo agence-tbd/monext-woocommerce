@@ -1095,6 +1095,10 @@ cancelPaylinePayment = function ()
 	    $this->SDK = $this->getSDK();
 	    $res = $this->SDK->getWebPaymentDetails(array('token'=>$_GET['paylinetoken'],'version'=>$this->APIVersion));
 	    $order = wc_get_order($res['order']['ref']);
+        if(!$order) {
+            wp_redirect(wc_get_cart_url());
+            die();
+        }
 
         // No refund on 02314 result code (when order is canceled before payement)
 	    if($res['result']['code'] == '00000'){
