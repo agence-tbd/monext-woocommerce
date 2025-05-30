@@ -12,8 +12,10 @@ const targetFolder = 'release/' + pluginSlug;
 const filesToCopy = [
     'assets',
     'build',
+    'doc',
     'includes',
     'languages',
+    'templates',
     'vendor',
     'woocommerce-payline.php',
     'CHANGELOG.md',
