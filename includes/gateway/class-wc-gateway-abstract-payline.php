@@ -999,6 +999,20 @@ hideReceivedContext = function() {
     jQuery("#site-header-cart").hide();
 };
 
+eventFinalstatehasbeenreached= function (e) {
+    if ( e.state === "PAYMENT_SUCCESS" ) {  
+        //--> Redirect to success page
+        //--> Ticket is hidden by CSS
+        //--> Wait for DOM update to simulate a click on the ticket confirmation button
+        window.setTimeout(() => {
+            const ticketConfirmationButton = document.getElementById("pl-ticket-default-ticket_btn");
+            if ( ticketConfirmationButton ) {
+                ticketConfirmationButton.click();
+            }
+        }, 0);
+    }
+};
+
 cancelPaylinePayment = function ()
 {
     Payline . Api . endToken(); // end the token s life
@@ -1045,7 +1059,7 @@ cancelPaylinePayment = function ()
             }
 
             printf(
-                '<div id="PaylineWidget" data-token="%s" data-template="%s" data-embeddedredirectionallowed="true"></div>',
+                '<div id="PaylineWidget" data-token="%s" data-template="%s" data-embeddedredirectionallowed="true" data-event-finalstatehasbeenreached="eventFinalstatehasbeenreached"></div>',
                 $token,
                 $match[1]
             );
