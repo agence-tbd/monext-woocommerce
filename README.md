@@ -41,6 +41,10 @@ You can also check [our documentation](https://docs.monext.fr/display/DT/Payment
 Theme need to be fully compatible with Woocommerce
 ![Screenshot showing theme compatibility in backoffice](doc/requirement_theme.png)
 
+### Environment (Development, QA validation)
+* WordPress version: 6.8.1
+* WooCommerce version: 9.8.5
+
 ### Installation process
 
 See https://wordpress.org/documentation/article/manage-plugins/#installing-plugins-1
