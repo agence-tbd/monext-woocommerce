@@ -10,6 +10,7 @@
  * License: LGPL-3.0+
  * GitHub Plugin URI: https://github.com/PaylineByMonext/payline-woocommerce/
  * Github Branch: master
+ * Requires Plugins: woocommerce
  * WC tested up to: 4.9.2
  * 
  *  Copyright 2017  Monext  (email : support@payline.com)
@@ -32,7 +33,14 @@ use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 
 if (!defined('ABSPATH')) exit;
 
+//To update for each new script migration
+if ( ! defined( 'WCPAYLINE_UPGRADE_VERSION' ) ) {
+    define( 'WCPAYLINE_UPGRADE_VERSION', '1.5.5' );
+}
+
 define('WCPAYLINE_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('WCPAYLINE_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('WCPAYLINE_PLUGIN_CLASS', plugin_basename(__FILE__));
 
 //require_once plugin_dir_path(__FILE__) . 'includes/admin/payline-logs-viewer.php';
 
@@ -68,6 +76,10 @@ function woocommerce_payline_init() {
 		require_once 'includes/gateway/class-wc-gateway-payline.php';
 	}
 
+	if (!class_exists('WC_Gateway_Payline_CPT')) {
+		require_once 'includes/gateway/class-wc-gateway-payline-cpt.php';
+	}
+
     if (!class_exists('WC_Gateway_Payline_NX')) {
         require_once 'includes/gateway/class-wc-gateway-payline-nx.php';
     }
@@ -96,6 +108,20 @@ function woocommerce_payline_init() {
 		require_once 'includes/admin/payline-logs-viewer.php';
 	}
 
+	if (!class_exists('WC_Payline_Upgrades')) {
+		require_once 'includes/class-wc-payline-upgrades.php';
+	}
+
+	if (!class_exists('WC_Payline_SDK')) {
+		require_once 'includes/class-wc-payline-payment-gateway.php';
+	}
+
+    if(!get_option( 'wc_payline_version' )){
+        update_option( 'wc_payline_version', '1.0.0' );
+    }
+
+    woocommerce_payline_upgrade();
+
 	require_once 'vendor/autoload.php';
 }
 add_action('woocommerce_init', 'woocommerce_payline_init');
@@ -108,10 +134,8 @@ add_action('woocommerce_init', 'woocommerce_payline_init');
  * @return mixed
  */
 function woocommerce_payline_add_method($methods) {
-    $methods[] = 'WC_Block_Payline_CPT';
-    $methods[] = 'WC_Block_Payline_REC';
-    $methods[] = 'WC_Block_Payline_NX';
     $methods[] = 'WC_Gateway_Payline';
+    $methods[] = 'WC_Gateway_Payline_CPT';
     $methods[] = 'WC_Gateway_Payline_NX';
     $methods[] = 'WC_Gateway_Payline_REC';
 
@@ -127,7 +151,7 @@ add_filter('woocommerce_payment_gateways', 'woocommerce_payline_add_method');
  * @return mixed
  */
 function woocommerce_payline_add_link($links, $file) {
-	$links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline').'">' . __('Settings CPT') .'</a><br />';
+	$links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt').'">' . __('Settings CPT') .'</a><br />';
     $links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx').'">' . __('Settings NX') .'</a>';
     $links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec').'">' . __('Settings REC') .'</a>';
     $links[] = '<a href="'.admin_url('tools.php?page=payline-logs').'">' . __('Logs Viewer') .'</a>';
@@ -159,11 +183,11 @@ add_filter( 'woocommerce_valid_order_statuses_for_order_again', 'woocommerce_pay
  */
 function woocommerce_payline_enable_gateway_order_pay( $available_gateways ) {
     if ( is_checkout() && is_wc_endpoint_url( 'order-pay' ) ) {
-        unset( $available_gateways['payline'] );
+        unset( $available_gateways['payline_cpt'] );
         unset( $available_gateways['payline_nx'] );
         unset( $available_gateways['payline_rec'] );
     }
-
+    unset( $available_gateways['payline'] );
     return $available_gateways;
 }
 
@@ -303,3 +327,45 @@ function payline_log_enqueue_admin_styles( $hook_suffix ) {
 
 add_action('wp_ajax_load_log', array( 'PaylineLogsViewer', 'doAjaxGetLogs' ));
 add_action('wp_ajax_nopriv_load_log', array( 'PaylineLogsViewer', 'doAjaxGetLogs' ));
+
+/**
+ * Update plugin version database. Useful for plugin upgrade scripts
+ * @return void
+ */
+function update_plugin_version() {
+    delete_option( 'wc_payline_version' );
+    update_option( 'wc_payline_version', WCPAYLINE_UPGRADE_VERSION );
+}
+
+/**
+ * Add multisite support to upgrade scripts
+ * @return void
+ */
+function woocommerce_payline_upgrade()
+{
+    if(is_multisite()) {
+        // Apply upgrade to each sites
+        foreach ( get_sites() as $site ) {
+            switch_to_blog( $site->blog_id );
+            checkVersion();
+            restore_current_blog();
+        }
+    }else{
+        checkVersion();
+    }
+}
+
+/**
+ * Compare version and apply upgrades
+ * @return void
+ */
+function checkVersion()
+{
+    $pluginUpgradeVersion = get_option( 'wc_payline_version' );
+
+    if (version_compare($pluginUpgradeVersion, '1.5.5', '<')) {
+        WC_Payline_Upgrades::upgrade_to_1_5_5();
+    }
+
+    update_plugin_version();
+}

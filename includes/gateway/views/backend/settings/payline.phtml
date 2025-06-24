@@ -1,0 +1,140 @@
+<style>
+    #paylineSettings {
+        .payline_settings_hero__container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+
+            margin-bottom: 35px;
+
+            h1 {
+                margin: 0;
+                padding: 0;
+            }
+
+            nav {
+                a {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #EF3F44;
+                    color: #fff;
+                    border-radius: 25px;
+                    text-decoration: none;
+                    width: 100%;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: background-color ease-in-out 0.3s;
+                }
+
+                a:hover {
+                    background-color: #aa2d30;
+                }
+            }
+        }
+    }
+
+    body.woocommerce_page_wc-settings #mainform {
+        background: #FFF;
+    }
+
+    .notice.wcs-nux__notice {
+        display: none;
+    }
+</style>
+
+
+<div id="paylineSettings">
+    <div class="payline_settings_hero__container">
+        <img src="<?php echo WCPAYLINE_PLUGIN_URL . 'assets/images/payline.png'?>" alt="Payline logo" />
+        <h1><?= __('Welcome to Monext Payments', 'payline') ?></h1>
+        <p>
+            <?php echo "Payline extension v".$this->extensionVersion;?><br/>
+            Developed by <a href="https://www.monext.fr/retail" target="#">Monext</a> for WooCommerce<br/>
+            For any question please contact Payline support<br/>
+        </p>
+
+        <nav>
+            <ul>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt') ?>"><?= __('Setup Standard payment (CPT)') ?></a></li>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec') ?>"><?= __('Setup Installment Payment (REC)') ?></a></li>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx') ?>"><?= __('Setup Subscription payment (NX)') ?></a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <?php if (!empty($reset_message)) : ?>
+        <div class='inline updated'><p><?= $reset_message ?></p></div>
+    <?php endif; ?>
+
+
+    <?php if (!empty($errors)) : ?>
+        <div class='inline error'>
+            <p><?= implode('</p><p>', $errors) ?></p>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($confirmations)) : ?>
+        <div class='inline updated'>
+            <p><?= implode('</p><p>', $confirmations) ?></p>
+        </div>
+    <?php endif; ?>
+
+    <?php /* Common Settings */?>
+
+    <table class="form-table">
+        <?php echo $this->getCommonSettingsFieldsHtml() ?>
+    </table>
+
+    <nav class="nav-tab-wrapper woo-nav-tab-wrapper" id="settingsFormNav" style="margin-top: 35px;">
+        <a href="#" data-tab="advancedSettings" class="nav-tab nav-tab-active">Advanced setting</a>
+        <a href="#" data-tab="errorMessages" class="nav-tab">Error Messages</a>
+        <a href="#" data-tab="proxySetting" class="nav-tab">Proxy setting</a>
+    </nav>
+    <div id="paylineSettingsSubForms">
+        <table class="form-table" id="advancedSettings">
+            <?php echo $this->getAdvancedSettingsFieldsHtml() ?>
+        </table>
+
+        <table class="form-table" data-hide-on-load="1" id="errorMessages">
+            <?php echo $this->getErrorMessagesFieldsHtml() ?>
+        </table>
+
+        <table class="form-table" data-hide-on-load="1" id="proxySetting">
+            <?php echo $this->getProxySettingsFieldsHtml() ?>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    document.querySelectorAll('[data-hide-on-load="1"]').forEach(elt => {
+        elt.style.display = 'none';
+    });
+
+
+    document.querySelectorAll("#settingsFormNav a").forEach(navLink => {
+        navLink.addEventListener('click', e => {
+            e.preventDefault();
+
+            const tableID = e.target.dataset.tab;
+            console.log({tableID});
+            document.querySelectorAll("#paylineSettingsSubForms table.form-table:not([id='" + tableID + "'])").forEach(table => {
+                table.style.display = "none";
+            });
+
+            document.querySelectorAll("#settingsFormNav .nav-tab-active").forEach(link => {
+                link.classList.remove('nav-tab-active');
+            });
+
+            e.target.classList.add("nav-tab-active");
+
+            const formTable = document.getElementById(tableID)
+            if (formTable) {
+                formTable.style.display = ""
+            }
+        })
+    });
+</script>

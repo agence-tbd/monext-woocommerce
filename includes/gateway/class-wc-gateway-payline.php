@@ -1,37 +1,322 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
-
-/**
- * Payline module for WooCommerce
- *
- * @class 		WC_Payline
- * @package		WooCommerce
- * @category	Payment Gateways
- *
- * WC tested up to: 4.0.1
- */
-
+use Automattic\WooCommerce\Internal\Admin\Settings\PaymentProviders;
+use Payline\PaylineSDK;
+use Monolog\Logger;
 
 class WC_Gateway_Payline extends WC_Abstract_Payline {
 
-    protected $paymentMode = 'CPT';
-
     public $id = 'payline';
 
-    public $method_title = 'Payline CPT';
+    public $method_title = 'Payline by Monext';
+
+    protected $callGetMerchantSettings = true;
+
+    protected $extensionVersion = '1.5.4';
+
+    /** @var Payline\PaylineSDK $SDK */
+    protected $SDK;
+
+    protected $admin_link = "";
+
+    protected $debugEnable;
+
+    /**
+     * Create instance of payment method
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->has_fields = false;
+        $this->title = 'payline';
+        $this->description = __("Conçu pour vendre");
+        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/payline_front.png');
+        $this->method_description = $this->description;
+
+        $this->supports = [];
+        $this->availability = false;
+        $this->init_form_fields();
+        $this->init_settings();
+        add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
+        add_filter( 'woocommerce_available_payment_gateways', [ $this, 'remove_payline_gateway' ] );
+    }
+
+    /**
+     * Remove/hide payline config gateway in checkout
+     * @param $gateways
+     * @return mixed
+     */
+    public function remove_payline_gateway($gateways)
+    {
+        foreach ($gateways as $key => $gateway){
+            if ($gateway instanceof WC_Gateway_Payline){
+                unset($gateways[$key]);
+            }
+        }
+        return $gateways;
+    }
+
+    public function admin_options() {
+        $templateData = $this->getDefaultTemplateData();
+        echo $this->renderTemplate(__DIR__ . '/views/backend/settings/payline.phtml', $templateData);
+    }
+
+    public function init_form_fields()
+    {
+        $this->form_fields = array_merge(
+            $this->getCommonSettingsFields(),
+            $this->getAdvancedSettingsFields(),
+            $this->getErrorMessagesFields(),
+            $this->getProxySettingsFields(),
+        );
+
+    }
+
+    /**
+     * Function use in template to get Common settings part
+     * @return string
+     */
+    protected function getCommonSettingsFieldsHtml() {
+        return $this->generate_settings_html($this->getCommonSettingsFields());
+    }
+
+    /**
+     * Return Common settings fields
+     * @return array
+     */
+    protected function getCommonSettingsFields() {
+        $fields = [];
+
+        $fields['merchant_id'] = array(
+            'title' => __('Merchant ID', 'payline'),
+            'type' => 'text',
+            'default' => '',
+            'description' => __('Your Payline account identifier', 'payline')
+        );
+        $fields['access_key'] = array(
+            'title' => __('Access key', 'payline'),
+            'type' => 'text',
+            'default' => '',
+            'description' => sprintf(__( 'Password used to call %s web services (available in the %s administration center)', 'payline'), 'Payline', 'Payline')
+        );
+        $fields['environment'] = array(
+            'title' => __('Target environment', 'payline'),
+            'type' => 'select',
+            'default' => 'Homologation',
+            'options' => array(
+                PaylineSDK::ENV_HOMO => __('Homologation', 'payline'),
+                PaylineSDK::ENV_PROD => __('Production', 'payline')
+            ),
+            'description' => __('Payline destination environement of your requests', 'payline')
+        );
+
+        $fields['pos'] = array(
+            'title' => __('Point of Sales', 'payline'),
+            'type' => 'select',
+            'description' => __('If the list is empty, please check your Payline account identifier and resave', 'payline'),
+            'options' => $this->getPointOfSalesList()
+        );
+
+        return $fields;
+    }
+
+    /**
+     * Function use in template to get Advanced settings part
+     * @return string
+     */
+    protected function getAdvancedSettingsFieldsHtml() {
+        return $this->generate_settings_html($this->getAdvancedSettingsFields());
+    }
+
+    /**
+     * Return Advanced settings fields
+     * @return array
+     */
+    protected function getAdvancedSettingsFields()
+    {
+        $fields = [];
+
+        $fields['smartdisplay_parameter'] = array(
+            'title' => __('Smartdisplay parameter', 'payline'),
+            'type' => 'text',
+            'description' => __('Added in doWebPayment privateData as display.rule.param', 'payline')
+        );
+
+        $fields['debug'] = array(
+            'title' => __( 'Debug logging', 'payline' ),
+            'type' => 'checkbox',
+            'label' => __( 'Enable', 'payline' ),
+            'default' => 'no'
+        );
+
+        $fields['language'] = array(
+            'title' => __('Default language', 'payline'),
+            'type' => 'select',
+            'default' => '',
+            'options' => array(
+                '' => __('Based on browser', 'payline'),
+                'fr' => __('fr', 'payline'),
+                'en' => __('en', 'payline'),
+                'pt' => __('pt', 'payline')
+            ),
+            'description' => __('Language used to display Payline web payment pages', 'payline')
+        );
+
+        return $fields;
+    }
+
+    /**
+     * Function use in template to get Error Messages part
+     * @return string
+     */
+    protected function getErrorMessagesFieldsHtml()
+    {
+        return $this->generate_settings_html($this->getErrorMessagesFields());
+    }
+
+    /**
+     * Return Error Messages fields
+     * @return array
+     */
+    protected function getErrorMessagesFields()
+    {
+        $fields = [];
+
+        $fields['user_error_message_refused'] = array(
+            'title' => __('Type Refused', 'payline'),
+            'type' => 'text',
+            'default' => __('Your payment has been refused', 'payline')
+        );
+        $fields['user_error_message_cancelled'] = array(
+            'title' => __('Type Cancelled', 'payline'),
+            'type' => 'text',
+            'default' => __('Your payment has been cancelled', 'payline')
+        );
+        $fields['user_error_message_error'] = array(
+            'title' => __('Type Error', 'payline'),
+            'type' => 'text',
+            'default' => __('Your payment is in error', 'payline')
+        );
+
+        return $fields;
+    }
+
+    /**
+     * Function use in template to get Proxy settings part
+     * @return string
+     */
+    protected function getProxySettingsFieldsHtml(){
+        return $this->generate_settings_html($this->getProxySettingsFields());
+    }
+
+    /**
+     * Return Proxy settings fields
+     * @return array
+     */
+    protected function getProxySettingsFields()
+    {
+        $fields = [];
+
+        $fields['proxy_host'] = array(
+            'title' => __('Host', 'payline'),
+            'type' => 'text',
+        );
+        $fields['proxy_port'] = array(
+            'title' => __('Port', 'payline'),
+            'type' => 'text',
+        );
+        $fields['proxy_login'] = array(
+            'title' => __('Login', 'payline'),
+            'type' => 'text',
+        );
+        $fields['proxy_password'] = array(
+            'title' => __('Password', 'payline'),
+            'type' => 'text',
+        );
+
+        return $fields;
+    }
+
+    /**
+     * Update Point Of Sales at every settings save
+     * @return void
+     */
+    public function process_admin_options()
+    {
+        parent::process_admin_options();
+        $this->updatePointOfSalesList($this->settings['pos']);
+    }
+
+    /**
+     * Return a list of Point Of Sales for Payline global settings
+     * @return false|mixed|null
+     */
+    public function getPointOfSalesList()
+    {
+        $optionList = get_option( 'woocommerce_payline_pos_list', []);
+
+        if(empty($optionList)) {
+            $this->updatePointOfSalesList();
+        }elseif (!empty($optionList)) {
+            $optionList = unserialize($optionList);
+        }
+
+        array_unshift($optionList,  __("Please chose a Point of Sale to get contracts"));
+        return $optionList;
+    }
+
+    /**
+     * Update pos list in bdd
+     * if pos are already selected, it's going to update contracts too
+     * @param $selectedPos
+     * @return void
+     */
+    public function updatePointOfSalesList($selectedPos = null)
+    {
+        $posListForSelect = array();
+        foreach (WC_Payline_SDK::getPointOfSales() as $pos) {
+            $posListForSelect[$pos['label']] = $pos['label'];
+            if ($selectedPos && $pos['label'] == $selectedPos
+                && isset($pos['contracts']['contract'])
+                && is_array($pos['contracts'])
+                && is_array($pos['contracts']['contract'])
+            ){
+                $this->updateContractList($pos['contracts']);
+            }
+        }
+        update_option( 'woocommerce_payline_pos_list',  serialize($posListForSelect));
+    }
 
 
     /**
-     * @param WC_Refund|bool|WC_Order $order
-     * @return mixed|void
+     * Update contract list in database
+     * @param $contracts
+     * @return void
      */
-    protected function getWebPaymentRequest(WC_Order $order) {
+    public function updateContractList($contracts)
+    {
+        $posContracts = array();
+        $contractsList = $contracts['contract'];
 
-        $requestParams = parent::getWebPaymentRequest($order);
+        $firstKey = key($contractsList);
+        if(!is_numeric($firstKey) && isset($contractsList['contractNumber'])) {
+            $contractsList = [$contractsList];
+        }
 
-        do_action('payline_before_do_web_payment', $requestParams, $this);
+        // Assign logo for each contract
+        //self::assignLogoToContracts($contractsList);
 
-        return $requestParams;
+        foreach ($contractsList as $contract) {
+            $posContracts[] = [
+                "id" => $contract['cardType'] . '-' . $contract['contractNumber'],
+                "label" => $contract['label'],
+                "contractNumber" => $contract['contractNumber']
+            ];
+        }
+        update_option( 'woocommerce_payline_pos_contracts_list',  serialize($posContracts));
     }
 
     /**
@@ -39,36 +324,57 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
      * @param array $res
      * @return false
      */
-    protected function paylineCancelWebPaymentDetails(WC_Order $order, array $res) {
+    protected function paylineSuccessWebPaymentDetails(WC_Order $order, array $res)
+    {
         return false;
     }
 
     /**
-     * @param WC_Order $order
-     * @param array $res
+     * If true, add tag "Action needed" on woo payment methods list
      * @return bool
      */
-    protected function paylineSuccessWebPaymentDetails(WC_Order $order, array $res) {
-
-        if($res['result']['code'] == '00000') {
-            $orderId = $order->get_id();
-
-            // Store transaction details
-            $order->update_meta_data( 'Transaction ID', $res['transaction']['id']);
-            $order->update_meta_data( 'Card number', $res['card']['number']);
-            $order->update_meta_data( 'Payment mean', $res['card']['type']);
-            $order->update_meta_data( 'Card expiry', $res['card']['expirationDate']);
-            $order->update_meta_data( '_contract_number', $res['payment']['contractNumber']);
-            $order->save();
-            $order->payment_complete($res['transaction']['id']);
+    public function needs_setup(): bool
+    {
+        if(!$this->is_account_connected())
+        {
+            $this->enabled = 'no';
             return true;
         }
+
+        $this->enabled = 'yes';
         return false;
     }
 
+    /**
+     * If true, add tag "Test mode" on woo payment methods list
+     * @return bool
+     */
+    public function is_test_mode(): bool
+    {
+        return ($this->settings['environment'] == PaylineSDK::ENV_HOMO);
+    }
 
+    /**
+     * If true, add "Complete setup" button on woo payment methods list
+     * @return bool
+     */
+    public function is_account_connected(): bool
+    {
+        if($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0)
+        {
+            return false;
+        }
 
+        if($this->settings['access_key'] == null || strlen($this->settings['access_key']) == 0)
+        {
+            return false;
+        }
 
+        if(!isset($this->settings['pos']) || $this->settings['pos'] == null || $this->settings['pos'] == "0")
+        {
+            return false;
+        }
 
-
+        return true;
+    }
 }

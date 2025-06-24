@@ -7,12 +7,12 @@ class WC_Block_Payline_CPT extends WC_Block_Abstract_Payline {
 	/**
 	 * @var string
 	 */
-	protected $name = 'payline';
+	protected $name = 'payline_cpt';
 
 	/**
 	 * @var string
 	 */
-	protected $settingsOptionName = 'woocommerce_payline_settings';
+	protected $settingsOptionName = 'woocommerce_payline_cpt_settings';
 
 	/**
 	 * @var string
@@ -22,5 +22,5 @@ class WC_Block_Payline_CPT extends WC_Block_Abstract_Payline {
 	/**
 	 * @var class-string
 	 */
-	protected $gatewayClass = WC_Gateway_Payline::class;
+	protected $gatewayClass = WC_Gateway_Payline_CPT::class;
 }

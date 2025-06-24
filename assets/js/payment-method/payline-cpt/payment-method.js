@@ -1,15 +1,15 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { __ } from '@wordpress/i18n';
 import { getPaymentMethodData } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
-
+import { __ } from '@wordpress/i18n';
+import WidgetPayline from '../components/WidgetPayline';
 
 /**
  * Internal dependencies
  */
 import { PAYMENT_METHOD_NAME } from './constants';
 
-const settings = getPaymentMethodData( 'payline', {} );
+const settings = getPaymentMethodData( 'payline_cpt', {} );
 const defaultLabel = __(
     'Payline CPT',
     'payline'
@@ -19,8 +19,14 @@ const label = decodeEntities( settings?.title || '' ) || defaultLabel;
 /**
  * Content component
  */
-const Content = () => {
-    return decodeEntities( settings.description || '' );
+const Content = (props) => {
+
+    const paymentDescription = decodeEntities(settings?.description || '');
+
+    return (
+        <>{ settings.widget_integration === 'redirection' ? <p>{paymentDescription}</p> : <WidgetPayline settings={ settings } checkoutContext={props} /> }</>
+        
+    );
 };
 
 /**
