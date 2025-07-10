@@ -940,7 +940,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
                 'price' => round(round(($item->get_subtotal() + $item->get_subtotal_tax())/$item['qty'],2) * 100),
                 'quantity' => (int)$item['qty'],
                 'comment' => (string)$item['name'],
-                'taxRate' => round(($item['total_tax'] / $item['total']) * 100 * 100)
+                'taxRate' => ($item['total'] > 0)?round(($item['total_tax'] / $item['total']) * 100 * 100): 0
             );
             $this->SDK->addOrderDetail($orderLine);
 
@@ -952,7 +952,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $adjustment = round($doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge']);
         if ($adjustment) {
             $prixHT = ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total());
-		    $taxRate = round(($order->get_cart_tax() / $prixHT) * 100 * 100);
+            $taxRate = ($prixHT > 0) ? round(($order->get_cart_tax() / $prixHT) * 100 * 100) : 0;
 
 		    $this->SDK->addOrderDetail(array(
 			    'ref' => 'CART_DISCOUNT',
