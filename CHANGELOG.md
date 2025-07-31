@@ -1,5 +1,14 @@
 ## Changelog
 
+### 1.5.5 - 2025/07/22
+* Fix round price
+* Fix taxrate error when total order at 0, fix #13
+* Fix infinite loading on log screen, fix #14
+
+#### Environment (Development, QA validation)
+* WordPress version: 6.8.1
+* WooCommerce version: 9.8.5
+
 ### 1.5.4 - 2025/06/12
   * Update API version from 26 to 34
   * Display notification URL in backoffice

@@ -25,7 +25,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.5.4';
+    protected $extensionVersion = '1.5.5';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 34;
@@ -349,7 +349,25 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     }
 
 
+    function add_form_fields($fieldId, $fieldParams, $relativePos = "after", $posRef = "-")
+    {
+        $index = ($relativePos == "after") ? count($this->form_fields) : 0;
+        if($posRef !=="-") {
+            $index = array_search( $posRef, array_keys( $this->form_fields ) );
+            if(!is_int($index)) {
+                $index= count($this->form_fields);
+            }
+            if($relativePos == "after" ) {
+                $index++;
+            }
+        }
 
+        $this->form_fields = array_merge(
+            array_slice( $this->form_fields, 0, $index, true ),
+            [$fieldId => $fieldParams],
+            array_slice( $this->form_fields, $index, null, true )
+        );
+    }
 
     function init_form_fields() {
 
@@ -919,10 +937,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 	    foreach ($items as $item) {
             $orderLine = array(
                 'ref' => $this->cleanSubstr($item['name'], 0, 50),
-                'price' => round(($item->get_subtotal() + $item->get_subtotal_tax())/$item['qty'],2) * 100,
+                'price' => round(round(($item->get_subtotal() + $item->get_subtotal_tax())/$item['qty'],2) * 100),
                 'quantity' => (int)$item['qty'],
                 'comment' => (string)$item['name'],
-                'taxRate' => round(($item['total_tax'] / $item['total']) * 100 * 100)
+                'taxRate' => ($item['total'] > 0)?round(($item['total_tax'] / $item['total']) * 100 * 100): 0
             );
             $this->SDK->addOrderDetail($orderLine);
 
@@ -934,7 +952,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $adjustment = round($doWebPaymentRequest['order']['amount'] - $totalOrderLines - $doWebPaymentRequest['order']['deliveryCharge']);
         if ($adjustment) {
             $prixHT = ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total());
-		    $taxRate = round(($order->get_cart_tax() / $prixHT) * 100 * 100);
+            $taxRate = ($prixHT > 0) ? round(($order->get_cart_tax() / $prixHT) * 100 * 100) : 0;
 
 		    $this->SDK->addOrderDetail(array(
 			    'ref' => 'CART_DISCOUNT',

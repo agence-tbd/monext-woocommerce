@@ -27,13 +27,13 @@ class PaylineLogsViewer {
 		return $logsFiles;
 	}
 
-	public function doAjaxGetLogs()
+	public static function doAjaxGetLogs()
 	{
 		$logFileContent = self::getLogsLines($_GET['data']);
 		wp_send_json_success($logFileContent);
 	}
 
-	protected function getLogsLines($logFilename)
+	protected static function getLogsLines($logFilename)
 	{
 		$logFileContent = [];
 		if ($logFilename) {
