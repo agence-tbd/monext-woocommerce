@@ -155,10 +155,12 @@ class WC_Payline_SDK
 
         if (!empty($paymentId)){
             $paymentIdSettings = get_option('woocommerce_'.$paymentId.'_settings');
+            $paymentIdSettings = array_filter($paymentIdSettings);
             if(!empty($paymentIdSettings)){
-                $settings = array_merge($settings, get_option('woocommerce_'.$paymentId.'_settings'));
+                $settings = array_merge($settings, $paymentIdSettings);
             }
-        }
+	}
+
 
         return $settings;
     }

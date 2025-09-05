@@ -184,6 +184,13 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'description' => __( 'Integration mode of the payment widget in the shop. Contact payline support for more details', 'payline' )
         );
 
+         $this->form_fields['widget_settings_customize'] = array(
+            'title' => __('Status', 'payline'),
+            'type' => 'checkbox',
+            'label' => sprintf(__('Customize widget', 'payline'), $this->defaultName),
+            'default' => 'yes'
+        );
+
         $this->form_fields['widget_settings_cta_label'] = array(
             'title' => __('CTA Label', 'payline'),
             'type' => 'text',
@@ -201,8 +208,16 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
                 '#d64c1d' => __('Red', 'payline'),
                 '#00786c' => __('Green', 'payline'),
                 '#42414f' => __('Dark grey', 'payline'),
-                '#e6d001' => __('Yellow', 'payline')
+                '#e6d001' => __('Yellow', 'payline'),
+                'custom' => __('Custom color', 'payline'),
             ]
+        );
+
+        $this->form_fields['widget_settings_css_cta_bg_color_custom'] = array(
+            'title' => __('CTA custom color', 'payline'),
+            'type' => 'color',
+            'default' => __('', 'payline'),
+            'description' => __('For example : #FF00BB', 'payline')
         );
 
         $pcRangeOptions = range(10, 30, 10);
@@ -233,8 +248,8 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'default' => __('', 'payline'),
             'options' => [
                 '' => __('Payline default', 'payline'),
-                '#000000' => __('Dark', 'payline'),
-                '#ffffff' => __('Light', 'payline')
+                '#000000' => __('Black', 'payline'),
+                '#ffffff' => __('White', 'payline')
             ]
         );
 
@@ -278,7 +293,10 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'title' => __('Text under CTA', 'payline'),
             'type' => 'text',
             'default' => __('', 'payline'),
-            'description' => __('For example : Clicking on the button automatically implies acceptance of the T&Cs<br /><strong>No html tags allowed</strong>', 'payline')
+            'description' => __('For example : Clicking on the button automatically implies acceptance of the T&Cs<br /><strong>No html tags allowed, max 255 chars.</strong>', 'payline'),
+            'custom_attributes' => array(
+                'maxlength' => '255'
+            ),
         );
 
         $this->form_fields['widget_settings_cta_preview'] = array(

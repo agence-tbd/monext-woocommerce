@@ -15,12 +15,6 @@ const WidgetPayline = ( {settings, checkoutContext} ) => {
 
     //--> Chargement des CSS et JS nécessaires pour le widget Payline
     useEffect( () => {
-
-        //--> ADD CSS
-        if (settings?.css_custom) {
-            addCustomCss(settings.css_custom, {'data-added-by' : 'payline'}, document.body);
-        }
-
         if ( checkoutContext.activePaymentMethod === "payline_cpt" && Payline?.Api ) {
             Payline.Api.reset();
         }

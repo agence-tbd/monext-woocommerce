@@ -245,6 +245,7 @@ $pageTitle = !empty($title[$section]) ? $title[$section] : '';
     const previewTextUnderCta = document.querySelector('#paylineCtaPreviewContainer p');
     const inputCtaText = document.getElementById("woocommerce_payline_cpt_widget_settings_cta_label");
     const ctaBgColorSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color");
+    const ctaBgColorCustom = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_custom");
     const ctaHoverDarkerSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_hover_darker");
     const ctaHoverLighterSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_hover_lighter");
     const ctaColorSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_text_color");
@@ -275,6 +276,70 @@ $pageTitle = !empty($title[$section]) ? $title[$section] : '';
         })
     })
 
+    //--> Toggle CTA custom color
+    const toggleCustomColorField = function (focusField = false) {
+        if (ctaBgColorSelect && ctaBgColorCustom) {
+            const isCustom = ctaBgColorSelect.value === 'custom';
+            ctaBgColorCustom.closest('tr').style.display = isCustom ? '' : 'none';
+
+            if (focusField) {
+                ctaBgColorCustom.focus();
+            }
+        }
+    }
+
+    const ctaBgColorSelectToggle = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color");
+    if (ctaBgColorSelectToggle) {
+        ctaBgColorSelectToggle.addEventListener('change', e => {
+            toggleCustomColorField(true);
+        });
+    }
+
+    toggleCustomColorField();
+
+
+    //--> Listen for color picker changes without remove previous iris change event
+    const colorpickpreview = document.querySelector('.colorpickpreview');
+    if (colorpickpreview) {
+        const observer = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    updateWidgetPreview();
+                }
+            }
+        });
+
+        observer.observe(colorpickpreview, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    //--> Toggle Widget Settings
+    const widgetSettingsToggle = document.getElementById('woocommerce_payline_cpt_widget_settings_customize');
+    if (widgetSettingsToggle) {
+
+        const widgetSettingsNodes = Array.from(document.querySelectorAll("[id^='woocommerce_payline_cpt_widget_settings_']")).filter(node => node !== widgetSettingsToggle);
+        const previewContainer = document.getElementById("paylineCtaPreviewContainer");
+        if (previewContainer) {
+            widgetSettingsNodes.push(previewContainer);
+        }
+        
+        const toggleFieldsSettings = (nodeList) => {
+            const isChecked = widgetSettingsToggle.checked;
+            nodeList.forEach(node => {
+                node.closest('tr').style.display = isChecked ? '' : 'none';
+            });
+
+            if (widgetSettingsToggle.checked === true) {
+                toggleCustomColorField();
+            }
+        }
+
+        widgetSettingsToggle.addEventListener('change', e => {
+            toggleFieldsSettings(widgetSettingsNodes);
+        });
+
+        toggleFieldsSettings(widgetSettingsNodes);
+    }
+
     //--> Prevent click on preview Button
     if (previewButton) {
         previewButton.addEventListener('click', e => {
@@ -287,8 +352,15 @@ $pageTitle = !empty($title[$section]) ? $title[$section] : '';
         let ctaBgColor = '#26A434';
         if (ctaBgColorSelect) {
             const newBgCtaColor = ctaBgColorSelect.value.trim();
-            if (newBgCtaColor) {
+            if (newBgCtaColor && newBgCtaColor !== 'custom') {
                 ctaBgColor = newBgCtaColor;
+            }
+
+            if (newBgCtaColor === 'custom' && ctaBgColorCustom) {
+                const customColorValue = typeof jQuery(ctaBgColorCustom).iris === 'function' ? jQuery(ctaBgColorCustom).iris('color') : ctaBgColorCustom.value.trim();
+                if (customColorValue) {
+                    ctaBgColor = customColorValue;
+                }
             }
         }
 
@@ -424,5 +496,23 @@ $pageTitle = !empty($title[$section]) ? $title[$section] : '';
 
 
     updateWidgetPreview();
+
+    //--> Contracts select auto adjust height
+    const contractsSelect = [
+        document.getElementById("woocommerce_payline_cpt_primary_contracts"),
+        document.getElementById("woocommerce_payline_rec_primary_contracts"),
+        document.getElementById("woocommerce_payline_nx_primary_contracts"),
+    ];
+
+    contractsSelect.forEach(c => {
+        if (c) {
+            const nbOptions = c.querySelectorAll('option').length
+            if ( nbOptions > 19 ) {
+                c.setAttribute('size', 19);
+            } else {
+                c.setAttribute('size', nbOptions);
+            }
+        }
+    });
 
 </script>

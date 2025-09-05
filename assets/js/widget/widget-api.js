@@ -1,9 +1,9 @@
-console.log(paylineData);
-const ctaLabel = paylineData.ctaLabel;
+const customizeWidget = paylineData.customizeWidget === 'yes';
+const ctaLabel = paylineData.ctaButton;
 const textUnderCta = paylineData.textUnderCta;
 
 window.eventDidshowstate = function (e) {
-    if ( e.state && e.state === "PAYMENT_METHODS_LIST" ) {
+    if ( e.state && e.state === "PAYMENT_METHODS_LIST" && customizeWidget ) {
         if (ctaLabel != "") {
             jQuery(".PaylineWidget .pl-pay-btn, .PaylineWidget .pl-btn").html(ctaLabel.replace("{{amount}}", Payline.Api.getContextInfo("PaylineFormattedAmount")));
         }
