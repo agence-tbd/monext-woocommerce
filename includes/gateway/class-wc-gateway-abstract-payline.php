@@ -233,7 +233,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     public function __construct() {
 
-        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/payline_front.png');
+        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/icone-monext.svg');
         $this->has_fields = false;
         $this->supports           = array('products',
             'refunds'
@@ -571,7 +571,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             'customizeWidget' => $this->getConfigValueIfExists('widget_settings_customize'),
             'ctaButton' => $this->getConfigValueIfExists('widget_settings_cta_label'),
             'textUnderCta' => $this->getConfigValueIfExists('widget_settings_text_under_cta'),
-            'widget_integration' => $this->settings['widget_integration']
+            'widget_integration' => $this->settings['widget_integration'],
+            'toto'=>'estbo'
         ]);
 
         $widgetJS = ($this->settings['environment'] ==PaylineSDK::ENV_HOMO)?PaylineSDK::HOMO_WDGT_JS:PaylineSDK::PROD_WDGT_JS;
@@ -650,10 +651,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $SDK = new PaylineSDK(
             $this->settings['merchant_id'],
             $this->settings['access_key'],
-            $this->settings['proxy_host'],
-            $this->settings['proxy_port'],
-            $this->settings['proxy_login'],
-            $this->settings['proxy_password'],
+            $this->settings['proxy_host'] ?? '',
+            $this->settings['proxy_port'] ?? '',
+            $this->settings['proxy_login'] ?? '',
+            $this->settings['proxy_password'] ?? '',
             $this->settings['environment'],
             $pathLog,
             ($this->debugEnable) ? Logger::DEBUG : Logger::INFO

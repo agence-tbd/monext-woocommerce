@@ -11,7 +11,7 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
 
     public $id = 'payline';
 
-    public $method_title = 'Payline by Monext';
+    public $method_title = 'Monext';
 
     protected $callGetMerchantSettings = true;
 
@@ -32,8 +32,8 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
         parent::__construct();
         $this->has_fields = false;
         $this->title = 'payline';
-        $this->description = __("Conçu pour vendre");
-        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/payline_front.png');
+        $this->description = __("Accept multiple online payments methods");
+        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/icone-monext.svg');
         $this->method_description = $this->description;
 
         $this->supports = [];
