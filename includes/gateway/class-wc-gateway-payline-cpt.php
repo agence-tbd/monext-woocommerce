@@ -195,11 +195,14 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'title' => __('CTA Label', 'payline'),
             'type' => 'text',
             'default' => __('Confirm and pay', 'payline'),
-            'description' => __('For example : "Confirm and pay {{amount}}" will display <em>Confirm and pay 142.56 EUR</em><br />{{amount}} is optional<br /><strong>No html tags allowed</strong>', 'payline')
+            'description' => __('For example : "Confirm and pay {{amount}}" will display <em>Confirm and pay 142.56 EUR</em><br />{{amount}} is optional<br /><strong>No html tags allowed</strong>', 'payline'),
+            'custom_attributes' => array(
+                'maxlength' => '255'
+            )
         );
 
         $this->form_fields['widget_settings_css_cta_bg_color'] = array(
-            'title' => __('CTA color', 'payline'),
+            'title' => __('CTA background color', 'payline'),
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
@@ -214,7 +217,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
         );
 
         $this->form_fields['widget_settings_css_cta_bg_color_custom'] = array(
-            'title' => __('CTA custom color', 'payline'),
+            'title' => __('CTA background custom color', 'payline'),
             'type' => 'color',
             'default' => __('', 'payline'),
             'description' => __('For example : #FF00BB', 'payline')
@@ -222,7 +225,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
 
         $pcRangeOptions = range(10, 30, 10);
         $rangeOptions = [
-            '' => __('No', 'payline'),
+            '' => __('Payline default', 'payline'),
         ];
         foreach ($pcRangeOptions AS $value) {
             $rangeOptions[$value] = $value . ' %';
@@ -243,7 +246,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
         );
 
         $this->form_fields['widget_settings_css_cta_text_color'] = array(
-            'title' => __('CTA color', 'payline'),
+            'title' => __('CTA font color', 'payline'),
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
