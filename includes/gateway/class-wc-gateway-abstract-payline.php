@@ -253,6 +253,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $this->testmode = (isset($this->settings['ctx_mode']) && $this->settings['ctx_mode'] === 'TEST');
         $this->debugEnable = (isset($this->settings['debug']) && $this->settings['debug'] == 'yes') ? true : false;
         $this->completeSettings();
+        $this->enabled = (!$this->is_account_connected()) ? false : $this->enabled;
 
         // The module settings page URL
         $link = add_query_arg('page', 'wc-settings', admin_url('admin.php'));
@@ -481,7 +482,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
      */
     protected function addTokenToReactObject()
     {
-        if (!$this->is_available() || $this->settings['widget_integration'] == 'redirection'){
+        if (!$this->is_available() || !isset($this->settings['widget_integration']) || $this->settings['widget_integration'] == 'redirection'){
             return;
         }
 
@@ -1373,11 +1374,11 @@ cancelPaylinePayment = function ()
                 //Nothing to do on notification if a transaction already exists for payline CPT
                 $transactionId = $order->get_transaction_id();
 	            $paymentMethod = $order->get_payment_method();
-	            if ($transactionId && $paymentMethod == 'payline') {
+	            if ($transactionId && $paymentMethod == 'payline_cpt') {
 		            die();
 	            }
 
-	            if (!empty($paymentMethod) && $paymentMethod != 'payline'){
+	            if (!empty($paymentMethod) && $paymentMethod != 'payline_cpt'){
 		            die();
 	            }
             }
@@ -1672,6 +1673,7 @@ cancelPaylinePayment = function ()
     {
         $globalsSettings = get_option('woocommerce_payline_settings');
         if(!empty($globalsSettings)){
+            unset($globalsSettings['enabled']);
             $this->settings = array_merge($this->settings, $globalsSettings);
         }
     }
@@ -1770,5 +1772,54 @@ cancelPaylinePayment = function ()
             );
             return false;
         }
+    }
+
+    /**
+     * If true, add "Complete setup" button on woo payment methods list
+     * @return bool
+     */
+    public function is_account_connected(): bool
+    {
+        if($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0)
+        {
+            return false;
+        }
+
+        if($this->settings['access_key'] == null || strlen($this->settings['access_key']) == 0)
+        {
+            return false;
+        }
+
+        if(!isset($this->settings['pos']) || $this->settings['pos'] == null || $this->settings['pos'] == "0")
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * If true, add tag "Action needed" on woo payment methods list
+     * @return bool
+     */
+    public function needs_setup(): bool
+    {
+        if(!$this->is_account_connected())
+        {
+            $this->enabled = 'no';
+            return true;
+        }
+
+        $this->enabled = 'yes';
+        return false;
+    }
+
+    /**
+     * If true, add tag "Test mode" on woo payment methods list
+     * @return bool
+     */
+    public function is_test_mode(): bool
+    {
+        return ($this->settings['environment'] == PaylineSDK::ENV_HOMO);
     }
 }

@@ -35,7 +35,7 @@ if (!defined('ABSPATH')) exit;
 
 //To update for each new script migration
 if ( ! defined( 'WCPAYLINE_UPGRADE_VERSION' ) ) {
-    define( 'WCPAYLINE_UPGRADE_VERSION', '1.5.5' );
+    define( 'WCPAYLINE_UPGRADE_VERSION', '1.5.6' );
 }
 
 define('WCPAYLINE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -120,9 +120,9 @@ function woocommerce_payline_init() {
         update_option( 'wc_payline_version', '1.0.0' );
     }
 
-    woocommerce_payline_upgrade();
+    require_once 'vendor/autoload.php';
 
-	require_once 'vendor/autoload.php';
+    woocommerce_payline_upgrade();
 }
 add_action('woocommerce_init', 'woocommerce_payline_init');
 
@@ -151,9 +151,7 @@ add_filter('woocommerce_payment_gateways', 'woocommerce_payline_add_method');
  * @return mixed
  */
 function woocommerce_payline_add_link($links, $file) {
-	$links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt').'">' . __('Settings CPT') .'</a><br />';
-    $links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx').'">' . __('Settings NX') .'</a>';
-    $links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec').'">' . __('Settings REC') .'</a>';
+	$links[] = '<a href="'.admin_url('admin.php?page=wc-settings&tab=checkout&section=payline').'">' . __('Settings') .'</a>';
     $links[] = '<a href="'.admin_url('tools.php?page=payline-logs').'">' . __('Logs Viewer') .'</a>';
 	return $links;
 }
@@ -332,9 +330,9 @@ add_action('wp_ajax_nopriv_load_log', array( 'PaylineLogsViewer', 'doAjaxGetLogs
  * Update plugin version database. Useful for plugin upgrade scripts
  * @return void
  */
-function update_plugin_version() {
+function update_plugin_version($version) {
     delete_option( 'wc_payline_version' );
-    update_option( 'wc_payline_version', WCPAYLINE_UPGRADE_VERSION );
+    update_option( 'wc_payline_version', $version );
 }
 
 /**
@@ -363,9 +361,8 @@ function checkVersion()
 {
     $pluginUpgradeVersion = get_option( 'wc_payline_version' );
 
-    if (version_compare($pluginUpgradeVersion, '1.5.5', '<')) {
-        WC_Payline_Upgrades::upgrade_to_1_5_5();
+    if (version_compare($pluginUpgradeVersion, '1.5.6', '<')) {
+        WC_Payline_Upgrades::upgrade_to_1_5_6();
+        update_plugin_version('1.5.6');
     }
-
-    update_plugin_version();
 }
