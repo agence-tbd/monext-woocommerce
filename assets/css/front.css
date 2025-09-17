@@ -1,0 +1,13 @@
+.woocommerce-checkout #payment ul.payment_methods li.payment_method_payline_cpt {
+    & > label {
+        display: inline-flex;
+        flex-direction: row-reverse;
+        position: relative;
+        top: 7px;
+
+        img {
+            max-width: 35px;
+            margin-right: 15px;
+        }
+    }
+}

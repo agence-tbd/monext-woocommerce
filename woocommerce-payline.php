@@ -53,6 +53,8 @@ function woocommerce_payline_activation() {
 		$message = sprintf(__('Sorry! In order to use WooCommerce %s Payment plugin, you need to install and activate the WooCommerce plugin.', 'payline'), 'Payline');
 		wp_die($message, 'WooCommerce Payline Gateway Plugin', array('back_link' => true));
 	}
+
+    flush_rewrite_rules();
 }
 register_activation_hook(__FILE__, 'woocommerce_payline_activation');
 
@@ -115,6 +117,10 @@ function woocommerce_payline_init() {
 	if (!class_exists('WC_Payline_SDK')) {
 		require_once 'includes/class-wc-payline-payment-gateway.php';
 	}
+
+    if (!class_exists('PaylineWallet')) {
+        require_once 'includes/front/payline-wallet.php';
+    }
 
     if(!get_option( 'wc_payline_version' )){
         update_option( 'wc_payline_version', '1.0.0' );
@@ -366,3 +372,13 @@ function checkVersion()
         update_plugin_version('1.5.6');
     }
 }
+
+/**
+ * Ajout du wallet dans l'espace mon compte
+ * 
+ */
+add_action( 'init', array( 'PaylineWallet', 'addWalletEndPoint' ) );
+add_filter('woocommerce_account_menu_items', array( 'PaylineWallet', 'addUserAccountMenuItem' ) );
+add_action('woocommerce_account_my-payline-wallet_endpoint', array( 'PaylineWallet', 'getPageContent' ));
+add_filter( 'the_title', array( 'PaylineWallet', 'getPageTitle' ), 11, 1 );
+add_action('wp_enqueue_scripts', array( 'PaylineWallet', 'payline_add_front_styles' ));

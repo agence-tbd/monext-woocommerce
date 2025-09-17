@@ -572,8 +572,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             'customizeWidget' => $this->getConfigValueIfExists('widget_settings_customize'),
             'ctaButton' => $this->getConfigValueIfExists('widget_settings_cta_label'),
             'textUnderCta' => $this->getConfigValueIfExists('widget_settings_text_under_cta'),
-            'widget_integration' => $this->settings['widget_integration'],
-            'toto'=>'estbo'
+            'widget_integration' => $this->settings['widget_integration']
         ]);
 
         $widgetJS = ($this->settings['environment'] ==PaylineSDK::ENV_HOMO)?PaylineSDK::HOMO_WDGT_JS:PaylineSDK::PROD_WDGT_JS;
@@ -628,43 +627,6 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ),  $errorCode, $errorMsg);
 		return $this->get_error_payment_url($order, $message);
 	}
-
-    /**
-     * @return PaylineSDK
-     */
-    public function getSDK()
-    {
-        if ( ! function_exists( 'get_plugins' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
-
-	    $pathLog = trailingslashit( dirname( WC_Log_Handler_File::get_log_file_path( 'payline' ) ) ) . trailingslashit( 'payline' );
-        if (!is_dir($pathLog)) {
-            @mkdir($pathLog, 0777, true);
-        }
-        $usedBy = [];
-        $usedBy[] = 'WP '.get_bloginfo('version');
-
-        $woocommerceinfo = get_plugins('/woocommerce');
-        $usedBy[] = (!empty($woocommerceinfo)) ? current($woocommerceinfo)['Name'] .' '. current($woocommerceinfo)['Version'] : 'wooComm';
-        $usedBy[] = 'v'.$this->extensionVersion;
-
-        $SDK = new PaylineSDK(
-            $this->settings['merchant_id'],
-            $this->settings['access_key'],
-            $this->settings['proxy_host'] ?? '',
-            $this->settings['proxy_port'] ?? '',
-            $this->settings['proxy_login'] ?? '',
-            $this->settings['proxy_password'] ?? '',
-            $this->settings['environment'],
-            $pathLog,
-            ($this->debugEnable) ? Logger::DEBUG : Logger::INFO
-        );
-        $SDK->usedBy(implode(' - ',$usedBy));
-
-        return $SDK;
-    }
-
 
     protected function getTokenOptionKey(WC_Order $order) {
         return 'plnTokenForOrder_' . $order->get_id();
@@ -1748,7 +1710,7 @@ cancelPaylinePayment = function ()
      */
     protected function captureOrder($order)
     {
-        $this->SDK = $this->getSDK();
+        $this->SDK = WC_Payline_SDK::getSDK($this->id);
 
         //Todo: When transaction table will be created, replace this API call by a database query
         $txDetailsRes = $this->SDK->getTransactionDetails(array('transactionId'=> $order->get_transaction_id(),'transactionHistory'=> 'Y'));
@@ -1830,5 +1792,91 @@ cancelPaylinePayment = function ()
     public function is_test_mode(): bool
     {
         return ($this->settings['environment'] == PaylineSDK::ENV_HOMO);
+    }
+
+    public function createManageWebWallet()
+    {
+        $this->SDK = WC_Payline_SDK::getSDK($this->id);
+        $contracts = [];
+        $contractsList = $this->getContractsForCurrentPos();
+        $walletId = $this->encryptWalletId(get_current_user_id());
+        $customer = new WC_Customer( get_current_user_id() );
+
+        foreach ($contractsList as $contract) {
+            if(!empty($contract['wallet'])) {
+                $contracts[] = $contract['contractNumber'];
+            }
+        }
+
+        $params = array(
+            'version' => $this->APIVersion,
+            'contractNumber' => current($contracts),
+            'walletId' => $walletId,
+            'contracts' => $contracts,
+            'buyer' => array(
+                'lastName' => $this->cleanSubstr($customer->get_last_name(), 0, 100),
+                'firstName' => $this->cleanSubstr($customer->get_first_name(), 0, 100),
+                'walletId' => $walletId,
+            ),
+            'updatePersonalDetails' => 0,
+
+            'notificationURL' => $this->get_request_url('notification'),
+            'returnURL' => $this->get_request_url('return'),
+            'cancelURL' => $this->get_request_url('cancel'),
+        );
+
+        return $this->SDK->manageWebWallet($params);
+    }
+
+    protected function getContractsForCurrentPos()
+    {
+        $currentPos         = $this->settings['pos'];
+        $enabledContracts   = $this->getContractsList();
+        $contractsList      = $this->getContractsByPosLabel($currentPos, $enabledContracts, true);
+        return $contractsList;
+    }
+
+    protected function getContractsByPosLabel($posLabel, $enabledContracts = array(), $useCache = false)
+    {
+        $posList = WC_Payline_SDK::getPointOfSales();
+        foreach ($posList as $pos) {
+            if (trim($pos['label']) == $posLabel && isset($pos['contracts']) && is_array($pos['contracts']) && isset($pos['contracts']['contract']) && is_array($pos['contracts']['contract'])) {
+                // Retrieve contracts and sort them
+                $finalContractsList = array();
+                $disabledContracts = array();
+                $contractsList = $pos['contracts']['contract'];
+
+                $firstKey = key($contractsList);
+                if(!is_numeric($firstKey) && isset($contractsList['contractNumber'])) {
+                    $contractsList = [$contractsList];
+                }
+
+                // Assign "enabled attriburte
+                foreach ($contractsList as &$contract) {
+                    $contractId = $contract['cardType'] . '-' . $contract['contractNumber'];
+                    $contract['enabled'] = (in_array($contractId, $enabledContracts));
+                    $contract['wallet'] = (in_array($contract['cardType'], ['AMEX', 'CB']));
+                    if (!$contract['enabled']) {
+                        $disabledContracts[] = $contract;
+                    }
+                }
+                // Sort contracts, enabled first
+                foreach ($enabledContracts as $enabledContractId) {
+                    foreach ($contractsList as &$contract) {
+                        $contractId = $contract['cardType'] . '-' . $contract['contractNumber'];
+                        if ($contractId == $enabledContractId) {
+                            $finalContractsList[] = $contract;
+                            break;
+                        }
+                    }
+                }
+
+                $finalContractsList = array_merge($finalContractsList, $disabledContracts);
+
+                return $finalContractsList;
+            }
+        }
+
+        return array();
     }
 }

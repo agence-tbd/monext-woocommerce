@@ -32,7 +32,7 @@ class WC_Block_Payline_CPT extends WC_Block_Abstract_Payline {
     {
         $payline_widget_div = '';
 
-        if (is_checkout() && ($this->settings['widget_integration'] != 'redirection'))
+        if (is_checkout() && !empty($this->settings['widget_integration']) && ($this->settings['widget_integration'] != 'redirection'))
         {
             /** @var WC_Abstract_Payline $gateway */
             $gateway = new $this->gateway;
