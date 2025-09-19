@@ -109,6 +109,8 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
 
         }
 
+        //$requestParams['recurring']['billingLeft'] = $this->settings['max_records'];
+
         do_action('payline_before_do_web_payment_rec', $requestParams, $this);
 
         return $requestParams;

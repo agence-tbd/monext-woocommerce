@@ -24,7 +24,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
-    protected $urlTypes = ['notification', 'return', 'cancel', 'webhook'];
+    protected $urlTypes = ['notification', 'return', 'cancel', 'webhook', 'resetToken'];
 
     protected $paymentMode = '';
 
@@ -763,7 +763,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
         if($tokenDecoded = $this->getArrayTokenForOrder($order)) {
             $dwpResult['history'] = $tokenDecoded['history'] ?? [];
-            $dwpResult['history'][] = ['token'=>$tokenDecoded['token'], 'date'=>$tokenDecoded['date']];
+            $dwpResult['history'][] = ['token'=>$tokenDecoded['token'], 'date'=>$tokenDecoded['date'] ?? date(self::PAYLINE_DATE_FORMAT)];
         }
         $tokenEncoded = json_encode($dwpResult);
 
@@ -1370,6 +1370,12 @@ cancelPaylinePayment = function ()
                 die();
             }
 
+            if($urlType=='resetToken'){
+                $this->getNewTokenForOrder($order);
+                wp_redirect(wc_get_checkout_url());
+                die();
+            }
+
             if($urlType=='notification') {
                 //Nothing to do on notification if a transaction already exists for payline CPT
                 $transactionId = $order->get_transaction_id();
@@ -1412,11 +1418,14 @@ cancelPaylinePayment = function ()
      * @param WC_Order $order
      * @param array $res
      * @return void
+     * @throws WC_Data_Exception
      */
     protected function paylineManageReturn(WC_Order $order, array $res)
     {
         $message = '';
         $status = '';
+        $order->set_payment_method($this->id);
+        $order->set_payment_method_title($this->defaultName);
         $orderId = $order->get_id();
         if($this->paylineSuccessWebPaymentDetails($order, $res)) {
             $this->paylineSetOrderPayed($order);

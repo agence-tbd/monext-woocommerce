@@ -1,7 +1,5 @@
 <?php
 
-use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
-
 class WC_Block_Payline_REC extends WC_Block_Abstract_Payline {
 
 	/**

@@ -31,6 +31,11 @@ eventFinalstatehasbeenreached= function (e) {
                 ticketConfirmationButton.click();
             }
         }, 0);
+    } else if (["PAYMENT_CANCELED", "PAYMENT_FAILURE", "TOKEN_EXPIRED"].includes(e.state)) {
+        const resetTokenUrl = new URL(Payline.Api.getCancelAndReturnUrls().cancelUrl);
+        const searchParams = new URLSearchParams(resetTokenUrl.search);
+        searchParams.set('url_type', 'resetToken');
+        window.location.href = `${resetTokenUrl.protocol}//${resetTokenUrl.hostname}${resetTokenUrl.pathname}?${searchParams.toString()}`;
     }
 };
 
