@@ -11,7 +11,7 @@ class PaylineWallet {
     /**
      * @return bool
      */
-    public static function isWalletEnabled(): bool
+    public static function isWalletEnabled()
     {
         $settings = get_option('woocommerce_payline_cpt_settings', []);
         return (isset($settings['wallet']) && $settings['wallet'] === 'yes');
@@ -20,7 +20,7 @@ class PaylineWallet {
     /**
      * @return mixed|null
      */
-    public static function getEnvSettingValue(): mixed
+    public static function getEnvSettingValue()
     {
         $settings = get_option('woocommerce_payline_settings', []);
         return $settings['environment'] ?? null;
@@ -29,7 +29,7 @@ class PaylineWallet {
     /**
      * @return void
      */
-    public static function addWalletEndPoint(): void
+    public static function addWalletEndPoint()
     {
         if (self::isWalletEnabled()) {
             add_rewrite_endpoint(self::$endPoint, EP_PAGES);
@@ -40,7 +40,7 @@ class PaylineWallet {
      * @param $menu_items
      * @return array
      */
-    public static function addUserAccountMenuItem($menu_items): array
+    public static function addUserAccountMenuItem($menu_items)
     {
         $retVal = [];
 
@@ -61,7 +61,7 @@ class PaylineWallet {
     /**
      * @return void
      */
-    public static function getPageContent(): void
+    public static function getPageContent()
     {
         $paylineGateway     = new WC_Gateway_Payline();
         $resultManage       = $paylineGateway->createManageWebWallet();
@@ -80,7 +80,7 @@ class PaylineWallet {
      * Add css to front
      * @return void
      */
-    public static function payline_add_front_styles(): void
+    public static function payline_add_front_styles()
     {
         if (self::is_wallet_endpoint_url()) {
             wp_enqueue_style(
@@ -101,7 +101,7 @@ class PaylineWallet {
      * @param $title
      * @return string
      */
-    public static function getPageTitle($title): string
+    public static function getPageTitle($title)
     {
         if (self::is_wallet_endpoint_url() && in_the_loop()) {
             $title = __('My Wallet', 'monext-online-woocommerce');
@@ -113,7 +113,7 @@ class PaylineWallet {
     /**
      * @return bool
      */
-    protected static function is_wallet_endpoint_url(): bool
+    protected static function is_wallet_endpoint_url()
     {
         global $wp;
 

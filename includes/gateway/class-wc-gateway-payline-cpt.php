@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Payline module for WooCommerce
  *
@@ -130,6 +129,14 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'description' => __('Type of transaction created after a payment', 'payline')
         );
 
+        $this->form_fields['capture_trigger_on'] = array(
+            'title' => __('Capture payment on defined event', 'payline'),
+            'type' => 'select',
+            'default' => '',
+            'options' => $this->getCaptureTriggerOptions(),
+            'description' => __('Choose a status to trigger a payment capture', 'payline')
+        );
+
         $this->form_fields['payed_order_status'] = array(
             'title' => __( 'Payed order status', 'payline' ),
             'type' => 'select',
@@ -167,9 +174,24 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
          */
 
         $this->form_fields['widget_settings'] = array(
-            'title' => __( 'WIDGET SETTINGS', 'payline' ),
+            'title' => __( 'PAYMENT FORM', 'payline' ),
             'type' => 'title'
         );
+
+
+        $isBlockTheme = function_exists('wp_is_block_theme') && wp_is_block_theme();
+        $widgetIntegrationOptions = [
+            'redirection' => __( 'Redirection mode', 'payline' )
+        ];
+        $widgetIntegrationAdditionalDescription = '<br/><strong>'.__( 'Block theme do not allow widget integration.', 'payline' ).'</strong>';
+        if(!$isBlockTheme) {
+            $options = array_merge($widgetIntegrationOptions,  [
+                'inshop-tab' => __( 'Widget in-Shop Tab mode', 'payline' ),
+                'inshop-column' => __( 'Widget in-Shop Column mode', 'payline' ),
+                'inshop-lightbox' => __( 'Widget in-Shop Lightbox mode', 'payline' )
+            ]);
+            $widgetIntegrationAdditionalDescription = '';
+        }
 
         $this->form_fields['widget_integration'] = array(
             'title' => __( 'Widget integration mode', 'payline' ),

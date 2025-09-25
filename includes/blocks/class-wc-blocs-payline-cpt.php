@@ -28,7 +28,7 @@ class WC_Block_Payline_CPT extends WC_Block_Abstract_Payline {
      * @return array|string[]
      * @throws RouteException
      */
-    public function get_payment_method_additionnal_data(): array
+    public function get_payment_method_additionnal_data()
     {
         $payline_widget_div = '';
 

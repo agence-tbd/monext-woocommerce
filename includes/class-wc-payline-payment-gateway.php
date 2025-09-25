@@ -33,13 +33,17 @@ class WC_Payline_SDK
 
         $settings = self::getMethodSettings($paymentId);
 
+        if(empty($settings['merchant_id']) || empty($settings['access_key'])) {
+            return null;
+        }
+
         $SDK = new PaylineSDK(
             $settings['merchant_id'],
             $settings['access_key'],
-            $settings['proxy_host'],
-            $settings['proxy_port'],
-            $settings['proxy_login'],
-            $settings['proxy_password'],
+            $settings['proxy_host'] ?? '',
+            $settings['proxy_port'] ?? '',
+            $settings['proxy_login'] ?? '',
+            $settings['proxy_password'] ?? '',
             $settings['environment'],
             $pathLog,
             ($settings['environment'] == PaylineSDK::ENV_HOMO) ? Logger::DEBUG : Logger::INFO
@@ -83,7 +87,7 @@ class WC_Payline_SDK
     {
         static $merchantSettings = null;
 
-        if ($merchantSettings === null) {
+        if ($merchantSettings === null && self::getSDK()) {
             // Get merchant settings
             $merchantSettings = self::getSDK()->getMerchantSettings(array());
 

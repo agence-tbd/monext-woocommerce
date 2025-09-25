@@ -66,7 +66,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
      *
      * @return array
      */
-	public function get_payment_method_data(): array
+	public function get_payment_method_data()
     {
         return array_merge([
             'title'       => $this->get_setting( 'title' ),
@@ -78,7 +78,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
     /**
      * @return string[]
      */
-    public function get_payment_method_additionnal_data(): array
+    public function get_payment_method_additionnal_data()
     {
         return [
             'widget_integration' => 'redirection'
