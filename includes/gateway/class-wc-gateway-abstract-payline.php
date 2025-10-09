@@ -30,7 +30,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.5.5';
+    protected $extensionVersion = '1.5.6';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 34;

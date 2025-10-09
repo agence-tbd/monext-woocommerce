@@ -1,5 +1,18 @@
 ## Changelog
 
+### 1.5.6 - 2025/10/09
+* Embedded Monext widget cart integration
+* Full backoffice configuration UX redesign 
+* Monext rebranding with new logo
+* Add user widget customisation
+* Add wallet integration on customer account
+* Add configuration to capture on event
+
+#### Environment (Development, QA validation)
+* WordPress version: 6.8.3
+* WooCommerce version: 9.8.5, 10.2.2
+
+
 ### 1.5.5 - 2025/07/22
 * Fix round price
 * Fix taxrate error when total order at 0, fix #13
