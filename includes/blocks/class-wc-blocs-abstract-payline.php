@@ -33,7 +33,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
 	 */
 	public function initialize() {
 		$this->settings = get_option( $this->settingsOptionName, [] );
-		$this->gateway  = new $this->gatewayClass;
+		$this->gateway  = $this->gatewayClass;
 	}
 
 	/**
@@ -61,16 +61,27 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
 		return [ $this->handle ];
 	}
 
-	/**
-	 * Returns an array of key=>value pairs of data made available to the payment methods script.
-	 *
-	 * @return array
-	 */
-	public function get_payment_method_data() {
-		return [
-			'title'       => $this->get_setting( 'title' ),
-			'description' => $this->get_setting( 'description' ),
-			'supports'    => $this->get_supported_features(),
-		];
+    /**
+     * Returns an array of key=>value pairs of data made available to the payment methods script.
+     *
+     * @return array
+     */
+	public function get_payment_method_data()
+    {
+        return array_merge([
+            'title'       => $this->get_setting( 'title' ),
+            'description' => $this->get_setting( 'description' ),
+            'supports'    => $this->get_supported_features(),
+        ], $this->get_payment_method_additionnal_data());
 	}
+
+    /**
+     * @return string[]
+     */
+    public function get_payment_method_additionnal_data()
+    {
+        return [
+            'widget_integration' => 'redirection'
+        ];
+    }
 }

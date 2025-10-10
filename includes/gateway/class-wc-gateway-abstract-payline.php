@@ -1,5 +1,8 @@
 <?php
 
+use Automattic\WooCommerce\StoreApi\Utilities\OrderController;
+use Automattic\WooCommerce\Blocks\Domain\Services\DraftOrders;
+use Automattic\WooCommerce\Enums\OrderInternalStatus;
 use Monolog\Logger;
 use Payline\PaylineSDK;
 use Automattic\WooCommerce\Utilities\LoggingUtil;
@@ -12,6 +15,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     const PAYLINE_DATE_FORMAT = 'd/m/Y H:i';
 
+    const PAYLINE_EXTEND_WIDGET_TOKEN_KEY = 'widget_token';
+
     /**
      * https://docs.payline.com/display/DT/Codes+-+Title
      * @var string
@@ -21,11 +26,11 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 
-    protected $urlTypes = ['notification', 'return', 'cancel', 'webhook'];
+    protected $urlTypes = ['notification', 'return', 'cancel', 'webhook', 'resetToken'];
 
     protected $paymentMode = '';
 
-    protected $extensionVersion = '1.5.5';
+    protected $extensionVersion = '1.5.6';
 
     /** @var int Payline internal API version */
     protected $APIVersion = 34;
@@ -230,7 +235,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
     public function __construct() {
 
-        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/payline_front.png');
+        $this->icon = apply_filters('woocommerce_payline_icon', WCPAYLINE_PLUGIN_URL . 'assets/images/icone-monext.svg');
         $this->has_fields = false;
         $this->supports           = array('products',
             'refunds'
@@ -245,10 +250,12 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $this->init_settings();
 
         // Define user set variables
-        $this->title = $this->settings['title'];
-        $this->description = $this->settings['description'];
+        $this->title = (!empty($this->settings['title']))? $this->settings['title'] :'Payline'.$this->paymentMode;
+        $this->description = (isset($this->settings['description']))? $this->settings['description']:'';
         $this->testmode = (isset($this->settings['ctx_mode']) && $this->settings['ctx_mode'] === 'TEST');
         $this->debugEnable = (isset($this->settings['debug']) && $this->settings['debug'] == 'yes') ? true : false;
+        $this->completeSettings();
+        $this->enabled = (!$this->is_account_connected()) ? false : $this->enabled;
 
         // The module settings page URL
         $link = add_query_arg('page', 'wc-settings', admin_url('admin.php'));
@@ -258,8 +265,16 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
         // Actions
         $this->add_payline_common_actions();
-
     }
+
+    protected function paylineSDK() {
+        if(empty($this->SDK)) {
+            $this->SDK = WC_Payline_SDK::getSDK($this->id);
+        }
+
+        return $this->SDK;
+    }
+
 
     /**
      * @param WC_Order $order
@@ -333,21 +348,30 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         // Reset payline admin form action
         add_action($this->id . '_reset_admin_options', array($this, 'reset_admin_options'));
 
-        // Generate form action
-        add_action('woocommerce_receipt_' . $this->id, array($this, 'generate_payline_form'));
+        // Generate form action //Todo: Check if we can delete this
+//        add_action('woocommerce_receipt_' . $this->id, array($this, 'generate_payline_form'));
 
         // Update admin form action
         add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
 
         // Return from payment platform action
         add_action('woocommerce_api_wc_gateway_' . $this->id, array($this, 'payline_callback'));
+        add_action('woocommerce_order_status_changed', array($this, 'captureOnTrigger'), 10, 4 );
+
+        add_action('template_redirect', array($this, 'payline_template_redirect'));
+        add_action('woocommerce_checkout_update_order_review', array($this, 'payline_checkout_update_order_review'));
+
+        // Hooks use to add token to extend data. Usefull on block checkout update
+        add_action('woocommerce_store_api_cart_select_shipping_rate', function() {$this->addTokenToReactObject();});
+        add_action('woocommerce_store_api_cart_update_order_from_request', function() {$this->addTokenToReactObject();});
+        add_action('woocommerce_store_api_checkout_update_order_from_request', function() {$this->addTokenToReactObject();});
+        add_action('woocommerce_store_api_checkout_update_order_meta', function() {$this->addTokenToReactObject();});
     }
 
     function get_icon() {
         $icon = $this->icon ? '<img style="width: 85px;" src="' . WC_HTTPS::force_https_url( $this->icon ) . '" alt="' . $this->title . '" />' : '';
         return apply_filters( 'woocommerce_gateway_icon', $icon, $this->id );
     }
-
 
     function add_form_fields($fieldId, $fieldParams, $relativePos = "after", $posRef = "-")
     {
@@ -369,307 +393,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         );
     }
 
-    function init_form_fields() {
-
-        $this->form_fields = array();
-
-        /*
-         * Base settings
-         */
-        $this->form_fields['base_settings'] = array(
-            'title' => __('BASE SETTINGS', 'payline' ),
-            'type' => 'title'
-        );
-        $this->form_fields['enabled'] = array(
-            'title' => __('Status', 'payline'),
-            'type' => 'checkbox',
-            'label' => sprintf(__('Enable %s', 'payline'), $this->method_title),
-            'default' => 'yes'
-        );
-        $this->form_fields['title'] = array(
-            'title' => __('Title', 'payline'),
-            'type' => 'text',
-            'description' => __('This controls the title which the user sees during checkout.', 'payline'),
-            'default' => $this->method_title
-        );
-        $this->form_fields['description'] = array(
-            'title' => __( 'Description', 'payline' ),
-            'type' => 'textarea',
-            'description' => __( 'This controls the description which the user sees during checkout.', 'payline' ),
-            'default' => sprintf(__('You will be redirected on %s secured pages at the end of your order.', 'payline'), 'Payline')
-        );
-	    $this->form_fields['wallet'] = array(
-		    'title' => __('Wallet', 'payline'),
-		    'type' => 'checkbox',
-		    'label' => __('Enable wallet', 'payline'),
-		    'description' => __( 'Please note: This service is optional and can be configured via the Monext Online Administration Center', 'payline' ),
-		    'default' => 'no'
-	    );
-        $this->form_fields['debug'] = array(
-            'title' => __( 'Debug logging', 'payline' ),
-            'type' => 'checkbox',
-            'label' => __( 'Enable', 'payline' ),
-            'default' => 'no'
-        );
-
-        /*
-         * Connexion
-         */
-        $this->form_fields['payline_gateway_access'] = array(
-            'title' => __( 'PAYLINE GATEWAY ACCESS', 'payline' ),
-            'type' => 'title'
-        );
-        $this->form_fields['merchant_id'] = array(
-            'title' => __('Merchant ID', 'payline'),
-            'type' => 'text',
-            'default' => '',
-            'description' => __('Your Payline account identifier', 'payline')
-        );
-        $this->form_fields['access_key'] = array(
-            'title' => __('Access key', 'payline'),
-            'type' => 'text',
-            'default' => '',
-            'description' => sprintf(__( 'Password used to call %s web services (available in the %s administration center)', 'payline'), 'Payline', 'Payline')
-        );
-        $this->form_fields['environment'] = array(
-            'title' => __('Target environment', 'payline'),
-            'type' => 'select',
-            'default' => 'Homologation',
-            'options' => array(
-                PaylineSDK::ENV_HOMO => __('Homologation', 'payline'),
-                PaylineSDK::ENV_PROD => __('Production', 'payline')
-            ),
-            'description' => __('Payline destination environement of your requests', 'payline')
-        );
-
-	    $this->form_fields['smartdisplay_parameter'] = array(
-		    'title' => __('Smartdisplay parameter', 'payline'),
-		    'type' => 'text',
-		    'description' => __('Added in doWebPayment privateData as display.rule.param', 'payline')
-	    );
-
-        /*
-         * Proxy Settings
-         */
-        $this->form_fields['proxy_settings'] = array(
-            'title' => __( 'PROXY SETTINGS', 'payline' ),
-            'type' => 'title'
-        );
-        $this->form_fields['proxy_host'] = array(
-            'title' => __('Host', 'payline'),
-            'type' => 'text',
-        );
-        $this->form_fields['proxy_port'] = array(
-            'title' => __('Port', 'payline'),
-            'type' => 'text',
-        );
-        $this->form_fields['proxy_login'] = array(
-            'title' => __('Login', 'payline'),
-            'type' => 'text',
-        );
-        $this->form_fields['proxy_password'] = array(
-            'title' => __('Password', 'payline'),
-            'type' => 'text',
-        );
-
-        /*
-         * Payment Settings
-         */
-        $this->form_fields['payment_settings'] = array(
-            'title' => __( 'PAYMENT SETTINGS', 'payline' ),
-            'type' => 'title'
-        );
-        $this->form_fields['language'] = array(
-            'title' => __('Default language', 'payline'),
-            'type' => 'select',
-            'default' => '',
-            'options' => array(
-                '' => __('Based on browser', 'payline'),
-                'fr' => __('fr', 'payline'),
-                'en' => __('en', 'payline'),
-                'pt' => __('pt', 'payline')
-            ),
-            'description' => __('Language used to display Payline web payment pages', 'payline')
-        );
-        $this->form_fields['payment_action'] = array(
-            'title' => __('Payment action', 'payline'),
-            'type' => 'select',
-            'default' => '',
-            'options' => array(
-                '100' => __('Authorization', 'payline'),
-                '101' => __('Authorization + Capture', 'payline')
-            ),
-            'description' => __('Type of transaction created after a payment', 'payline')
-        );
-
-        $this->form_fields['payed_order_status'] = array(
-            'title' => __( 'Payed order status', 'payline' ),
-            'type' => 'select',
-            'default' => 'default',
-            'options' => array(
-                'default' => __( 'Default Woocommerce status (processing)', 'payline' ),
-                'completed' => __( 'Completed', 'payline' )
-            ),
-            'description' => __( 'Choose the status of payed order', 'payline' )
-        );
-
-        $this->form_fields['widget_integration'] = array(
-            'title' => __( 'Widget integration mode', 'payline' ),
-            'type' => 'select',
-            'default' => 'redirection',
-            'options' => array(
-                'inshop-tab' => __( 'In-Shop Tab mode', 'payline' ),
-                'inshop-column' => __( 'In-Shop Column mode', 'payline' ),
-                'inshop-lightbox' => __( 'In-Shop Lightbox mode', 'payline' ),
-                'redirection' => __( 'Redirection mode', 'payline' )
-            ),
-            'description' => __( 'Integration mode of the payment widget in the shop. Contact payline support for more details', 'payline' )
-        );
-
-        $this->form_fields['custom_page_code'] = array(
-            'title' => __('Custom page code', 'payline'),
-            'type' => 'text',
-            'description' => __('In redirection mode, fill the code of payment page customization created in Payline Administration Center', 'payline')
-        );
-        $this->form_fields['main_contract'] = array(
-            'title' => __('Main contract number', 'payline'),
-            'type' => 'text',
-            'description' => __('Contract number that determines the point of sale used in Payline', 'payline')
-        );
-        $this->form_fields['primary_contracts'] = array(
-            'title' => __('Primary contracts', 'payline'),
-            'type' => 'text',
-            'description' => __('Contracts displayed on web payment page - step 1. Values must be separated by ;', 'payline')
-        );
-        $this->form_fields['secondary_contracts'] = array(
-            'title' => __('Secondary contracts', 'payline'),
-            'type' => 'text',
-            'description' => __('Contracts displayed for payment retry. Values must be separated by ;', 'payline')
-        );
-	    /*
-		 * Error message
-		 */
-	    $this->form_fields['error_messages'] = array(
-		    'title' => __( 'ERROR MESSAGES', 'payline' ),
-		    'type' => 'title'
-	    );
-	    $this->form_fields['user_error_message_refused'] = array(
-		    'title' => __('Type Refused', 'payline'),
-		    'type' => 'text',
-		    'default' => __('Your payment has been refused', 'payline')
-	    );
-	    $this->form_fields['user_error_message_cancelled'] = array(
-		    'title' => __('Type Cancelled', 'payline'),
-		    'type' => 'text',
-		    'default' => __('Your payment has been cancelled', 'payline')
-	    );
-	    $this->form_fields['user_error_message_error'] = array(
-		    'title' => __('Type Error', 'payline'),
-		    'type' => 'text',
-		    'default' => __('Your payment is in error', 'payline')
-	    );
-    }
-
-
-
     public function admin_options() {
-        global $woocommerce;
-
-        if(key_exists('reset', $_REQUEST) && $_REQUEST['reset'] == 'true') {
-            do_action($this->id . '_reset_admin_options');
-        }
-        ?>
-
-        <table border="0">
-            <tr>
-                <td width="40%">
-                    <p>
-                        <img src="<?php echo WCPAYLINE_PLUGIN_URL . 'assets/images/payline.png'?>" alt="Payline logo" />
-                    </p>
-                </td>
-                <td width="100%">
-                    <p>
-                        <?php echo "Payline extension v".$this->extensionVersion;?><br/>
-                        Developed by <a href="https://www.monext.fr/retail" target="#">Monext</a> for WooCommerce<br/>
-                        For any question please contact Payline support<br/>
-                    </p>
-                </td>
-            </tr>
-        </table>
-
-
-        <?php
-        if (!empty($woocommerce->session->payline_reset)){
-            unset($woocommerce->session->payline_reset);
-            echo "<div class='inline updated'><p>".sprintf(__( 'Your %s configuration parameters are reset.', 'payline'), 'Payline')."</p></div>";
-        }
-        $this->disp_errors = "";
-
-        if (!extension_loaded('soap')) {
-            $this->callGetMerchantSettings = false;
-            $this->disp_errors .= "<p>".sprintf(__( 'The SOAP extension is not enabled in your PHP installation and is required', 'payline'))."</p>";
-        }
-
-        if($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0){
-            $this->callGetMerchantSettings = false;
-            $this->disp_errors .= "<p>".sprintf(__( '%s is mandatory', 'payline'), __('Merchant ID', 'payline' ))."</p>";
-        }
-        if($this->settings['access_key'] == null || strlen($this->settings['access_key']) == 0){
-            $this->callGetMerchantSettings = false;
-            $this->disp_errors .= "<p>".sprintf(__( '%s is mandatory', 'payline'), __('Access Key', 'payline' ))."</p>";
-        }
-
-        if($this->settings['main_contract'] == null || strlen($this->settings['main_contract']) == 0){
-            $this->callGetMerchantSettings = false;
-            $this->disp_errors .= "<p>".sprintf(__( '%s is mandatory', 'payline'), __('Main contract number', 'payline' ))."</p>";
-        }
-
-        if($this->callGetMerchantSettings){
-
-            $this->SDK = $this->getSDK();
-            $res = $this->SDK->getEncryptionKey([]);
-            if($res['result']['code'] == '00000'){
-                echo "<div class='inline updated'>";
-                echo "<p>".__( 'Your settings is correct, connexion with Payline is established', 'payline')."</p>";
-                if($this->settings['environment'] == PaylineSDK::ENV_HOMO){
-                    echo "<p>".__( 'You are in homologation mode, payments are simulated !', 'payline')."<p>";
-                }
-                echo "</div>";
-            }else{
-                if(strcmp(WC_Gateway_Payline::BAD_CONNECT_SETTINGS_ERR, $res['result']['longMessage']) == 0){
-                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline, check your %s', 'payline'), __('PAYLINE GATEWAY ACCESS', 'payline' ))."</p>";
-                }elseif(strcmp(WC_Gateway_Payline::BAD_PROXY_SETTINGS_ERR, $res['result']['longMessage']) == 0){
-                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline, check your %s', 'payline'), __('PROXY SETTINGS', 'payline' ))."</p>";
-                }else{
-                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline (code %s : %s)', 'payline'), $res['result']['code'], $res['result']['longMessage'])."</p>";
-                }
-            }
-        }
-
-        if($this->disp_errors != ""){
-            echo "<div class='inline error'>$this->disp_errors</div>";
-        }
-
-	    echo "<div class='inline notice notice-info'><strong>URL notification : </strong>".$this->get_request_url('notification')."</div>";
-
-        ?>
-
-        <table class="form-table">
-            <?php
-            // Generate the HTML For the settings form.
-            $this->generate_settings_html();
-            ?>
-        </table>
-
-        <?php
-        // Reset settings URL
-        $resetLink = add_query_arg('reset', 'true', $this->admin_link);
-        $resetLink = wp_nonce_url($resetLink, 'payline_reset');
-        ?>
-
-        <a href="<?php echo $resetLink; ?>"><?php _e('Reset configuration', 'payline');?></a>
-
-        <?php
+        $templateData = $this->getDefaultTemplateData();
+        $templateData['section'] = $this->id;
+        echo $this->renderTemplate(__DIR__ . '/views/backend/settings/payline-payments-settings.phtml', $templateData);
     }
 
     function reset_admin_options() {
@@ -697,7 +424,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 
 
     function validate_multiselect_field ($key, $value) {
-        $newValue = $_POST[$this->plugin_id . $this->id . '_' . $key];
+        $newValue = isset($_POST[$this->plugin_id . $this->id . '_' . $key]) ? $_POST[$this->plugin_id . $this->id . '_' . $key] : null;
         if(isset($newValue) && is_array($newValue) && in_array('', $newValue)) {
             return array('');
         } else {
@@ -709,7 +436,168 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         return parent::is_available();
     }
 
-	function process_payment($order_id) {
+    /**
+     * @return void
+     */
+    function payline_template_redirect()
+    {
+        $this->getNewDraftedOrderId();
+    }
+
+    /**
+     * Create a draft order on demand. Usefull for widget integration in checkout
+     * @return int|null
+     * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException
+     */
+    public function getNewDraftedOrderId()
+    {
+        if ($this->is_available() && is_checkout() && ! is_wc_endpoint_url() ) {
+            if ( ! WC()->session->get( 'store_api_draft_order' ) ) {
+                $order = (new OrderController())->create_order_from_cart();
+                WC()->session->set( 'store_api_draft_order', $order->get_id() );
+                return $order->get_id();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Hook method to update draft order as block checkout way
+     * @param $post_data
+     * @return void
+     */
+    function payline_checkout_update_order_review($post_data)
+    {
+        if (!$this->is_available()){
+            return;
+        }
+
+        $order_id = WC()->session->get( 'store_api_draft_order' );
+        if (!$order_id) {
+            return;
+        }
+
+        $order = wc_get_order( $order_id );
+        if(!$order){
+            WC()->session->__unset('store_api_draft_order');
+            return;
+        }
+
+        (new OrderController())->update_order_from_cart($order);
+    }
+
+    /**
+     * Add extention data to Store API Cart return
+     * @return void
+     */
+    protected function addTokenToReactObject()
+    {
+        if (!$this->is_available() || !isset($this->settings['widget_integration']) || $this->settings['widget_integration'] == 'redirection'){
+            return;
+        }
+
+        woocommerce_store_api_register_endpoint_data(
+            array(
+                'endpoint'        => Automattic\WooCommerce\StoreApi\Schemas\V1\CartSchema::IDENTIFIER,
+                'namespace'       => 'monext_payline',
+                'data_callback' => [ $this, 'extention_data_callback' ],
+                'schema_callback' => function() {
+                    return array(
+                        'properties' => array(
+                            self::PAYLINE_EXTEND_WIDGET_TOKEN_KEY => array(
+                                'type' => 'string',
+                            ),
+                        ),
+                    );
+                },
+                'schema_type'     => ARRAY_A,
+            )
+        );
+
+    }
+
+    /**
+     * Callback function used in addTokenToReactObject
+     * @return array
+     */
+    public function extention_data_callback()
+    {
+        $orderId = WC()->session->get( 'store_api_draft_order' );
+        $order = wc_get_order($orderId);
+
+        $token = '';
+        if($order) {
+            $token = $this->getCachedDWPDataForOrder($order,'token',true);
+            if (empty($token)) {
+                $token = $this->getNewTokenForOrder($order);
+            }
+        }
+
+        return [
+            self::PAYLINE_EXTEND_WIDGET_TOKEN_KEY => $token,
+        ];
+    }
+
+
+    /**
+     * Woocommerce native function to get payment method field.
+     * @return void
+     */
+    function payment_fields()
+    {
+        $this->process_scripts();
+        if (( isset($_GET['wc-ajax']) && $_GET['wc-ajax'] == 'update_order_review' ) &&
+            preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match) )
+        {
+            $order_id = WC()->session->get( 'store_api_draft_order' );
+            echo $this->getPaylineWidget($order_id, $match);
+            echo '<script>Payline.Api.init();</script>';
+
+        }
+
+        if ($this->settings['widget_integration'] === 'redirection') {
+            echo "<p>" . strip_tags($this->settings['description']) . "</p>";
+        }
+    }
+
+    /**
+     * @return void
+     */
+    public function process_scripts()
+    {
+        $widgetCustomCss = $this->generateWidgetCustomCss();
+        if (!empty($widgetCustomCss)) {
+            wp_register_style('payline-custom', false);
+            wp_add_inline_style('payline-custom', $widgetCustomCss);
+            wp_enqueue_style('payline-custom', false);
+        }
+
+        wp_enqueue_script(
+            'payline-widget-api',
+            WCPAYLINE_PLUGIN_URL . 'assets/js/widget/widget-api.js',
+            [ 'jquery' ]
+        );
+
+        wp_localize_script( 'payline-widget-api', 'paylineData', [
+            'customizeWidget' => $this->getConfigValueIfExists('widget_settings_customize'),
+            'ctaButton' => $this->getConfigValueIfExists('widget_settings_cta_label'),
+            'textUnderCta' => $this->getConfigValueIfExists('widget_settings_text_under_cta'),
+            'widget_integration' => $this->settings['widget_integration'],
+            'toto'=>'estbo'
+        ]);
+
+        $widgetJS = ($this->settings['environment'] ==PaylineSDK::ENV_HOMO)?PaylineSDK::HOMO_WDGT_JS:PaylineSDK::PROD_WDGT_JS;
+        $widgetCSS = ($this->settings['environment'] ==PaylineSDK::ENV_HOMO)?PaylineSDK::HOMO_WDGT_CSS:PaylineSDK::PROD_WDGT_CSS;
+        wp_enqueue_script('widget-min', $widgetJS);
+        wp_enqueue_style('widget-min', $widgetCSS);
+    }
+
+    /**
+     * //Todo: To simplify
+     * @param $order_id
+     * @return array
+     */
+    function process_payment($order_id) {
 		$order = wc_get_order($order_id);
 
         if (preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match)) {
@@ -728,14 +616,13 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 	function getRawRedirectUrl($order_id) {
 		$order = wc_get_order($order_id);
 
-		$this->SDK = $this->getSDK();
         $redirectURL = $this->getCachedDWPDataForOrder($order, 'redirectURL', true);
         if($redirectURL) {
             return $redirectURL;
         }
 
         $requestParams = $this->getWebPaymentRequest($order);
-        $result = $this->SDK->doWebPayment( $requestParams );
+        $result = $this->paylineSDK()->doWebPayment( $requestParams );
         $this->debug($result, array(__METHOD__));
         do_action( 'payline_after_do_web_payment', $result, $this );
 
@@ -750,43 +637,6 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $message = sprintf( __( 'You can\'t be redirected to payment page (error code %s : %s). Please contact us.', 'payline' ),  $errorCode, $errorMsg);
 		return $this->get_error_payment_url($order, $message);
 	}
-
-    /**
-     * @return PaylineSDK
-     */
-    public function getSDK()
-    {
-        if ( ! function_exists( 'get_plugins' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
-
-	    $pathLog = trailingslashit( dirname( WC_Log_Handler_File::get_log_file_path( 'payline' ) ) ) . trailingslashit( 'payline' );
-        if (!is_dir($pathLog)) {
-            @mkdir($pathLog, 0777, true);
-        }
-        $usedBy = [];
-        $usedBy[] = 'WP '.get_bloginfo('version');
-
-        $woocommerceinfo = get_plugins('/woocommerce');
-        $usedBy[] = (!empty($woocommerceinfo)) ? current($woocommerceinfo)['Name'] .' '. current($woocommerceinfo)['Version'] : 'wooComm';
-        $usedBy[] = 'v'.$this->extensionVersion;
-
-        $SDK = new PaylineSDK(
-            $this->settings['merchant_id'],
-            $this->settings['access_key'],
-            $this->settings['proxy_host'],
-            $this->settings['proxy_port'],
-            $this->settings['proxy_login'],
-            $this->settings['proxy_password'],
-            $this->settings['environment'],
-            $pathLog,
-            ($this->debugEnable) ? Logger::DEBUG : Logger::INFO
-        );
-        $SDK->usedBy(implode(' - ',$usedBy));
-
-        return $SDK;
-    }
-
 
     protected function getTokenOptionKey(WC_Order $order) {
         return 'plnTokenForOrder_' . $order->get_id();
@@ -809,13 +659,23 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     }
 
 
+    /**
+     * @param WC_Order $order
+     * @param $key
+     * @param $available
+     * @return array|mixed|string|null
+     */
     protected function getCachedDWPDataForOrder(WC_Order $order, $key= null, $available = false) {
         $tokenDecoded = $this->getArrayTokenForOrder($order);
 
         $token = $tokenDecoded['token'] ?? null;
         if($token && !empty($tokenDecoded['date'])) {
-            $tokenAge = floor((strtotime(date(self::PAYLINE_DATE_FORMAT))-strtotime($tokenDecoded['date']))/60);
+            $dtToken = DateTime::createFromFormat('d/m/Y H:i', $tokenDecoded['date']);
+            $tokenAge = floor((strtotime(date('Y-m-d H:i'))-strtotime($dtToken->format('Y-m-d H:i')))/60);
             if($available && $tokenAge>12) {
+                $tokenDecoded = [];
+            }
+            if (!isset($tokenDecoded['cart_hash']) || ($available && WC()->cart->get_cart_hash() !== $tokenDecoded['cart_hash'])){
                 $tokenDecoded = [];
             }
         }
@@ -826,22 +686,57 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         return $tokenDecoded;
     }
 
+
+    /**
+     * @param WC_Order $order
+     * @return mixed|null
+     */
+    protected function getNewTokenForOrder(WC_Order $order)
+    {
+        $requestParams = $this->getWebPaymentRequest($order);
+        $this->debug($requestParams, array(__METHOD__));
+
+        $result = $this->paylineSDK()->doWebPayment( $requestParams );
+        $this->debug($result, array(__METHOD__));
+        do_action( 'payline_after_do_web_payment', $result, $this );
+
+        if ( $result['result']['code'] === '00000' ) {
+            $this->updateTokenForOrder($order, $result);
+            return $result['token'];
+        } else {
+            new WP_Error(
+                'error',
+                sprintf(
+                    __('An error occured while displaying the payment form (error code %s : %s). Please contact us.', 'payline'),
+                    $result['result']['code'], $result['result']['longMessage']
+                )
+            );
+            return null;
+        }
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param array $dwpResult
+     * @return void
+     */
     protected function updateTokenForOrder(WC_Order $order, array $dwpResult) {
         unset($dwpResult['result']);
 
         $tokenOptionKey = $this->getTokenOptionKey($order);
         if(!empty( $dwpResult['token'])) {
             $dwpResult['date'] = date(self::PAYLINE_DATE_FORMAT);
+            $dwpResult['cart_hash'] = WC()->cart->get_cart_hash();
         } else {
             $dwpResult['token'] = '';
+            $dwpResult['cart_hash'] = '';
         }
 
         if($tokenDecoded = $this->getArrayTokenForOrder($order)) {
             $dwpResult['history'] = $tokenDecoded['history'] ?? [];
-            $dwpResult['history'][] = ['token'=>$tokenDecoded['token'], 'date'=>$tokenDecoded['date']];
+            $dwpResult['history'][] = ['token'=>$tokenDecoded['token'], 'date'=>$tokenDecoded['date'] ?? date(self::PAYLINE_DATE_FORMAT)];
         }
         $tokenEncoded = json_encode($dwpResult);
-
 
         update_option($tokenOptionKey, $tokenEncoded);
     }
@@ -868,9 +763,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['version'] = $this->APIVersion;
         $doWebPaymentRequest['payment']['amount'] = round($order->get_total() * 100);
         $doWebPaymentRequest['payment']['currency'] = $this->_currencies[$order->get_currency()];
-        $doWebPaymentRequest['payment']['action'] = $this->settings['payment_action'];
+        $doWebPaymentRequest['payment']['action'] = (isset($this->settings['payment_action']))? $this->settings['payment_action'] : '101';
         $doWebPaymentRequest['payment']['mode'] = $this->paymentMode;
-        $doWebPaymentRequest['payment']['contractNumber'] = $this->settings['main_contract'];
+        $mainContract = reset($this->settings['primary_contracts']);
+        $doWebPaymentRequest['payment']['contractNumber'] = $mainContract;
 
         // ORDER
 
@@ -942,7 +838,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
                 'comment' => (string)$item['name'],
                 'taxRate' => ($item['total'] > 0)?round(($item['total_tax'] / $item['total']) * 100 * 100): 0
             );
-            $this->SDK->addOrderDetail($orderLine);
+            $this->paylineSDK()->addOrderDetail($orderLine);
 
             $totalOrderLines+=$orderLine['price'] * $orderLine['quantity'];
         }
@@ -954,7 +850,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $prixHT = ($order->get_total() - $order->get_total_tax() - $order->get_shipping_total());
             $taxRate = ($prixHT > 0) ? round(($order->get_cart_tax() / $prixHT) * 100 * 100) : 0;
 
-		    $this->SDK->addOrderDetail(array(
+		    $this->paylineSDK()->addOrderDetail(array(
 			    'ref' => 'CART_DISCOUNT',
 			    'price' => $adjustment,
 			    'quantity' => 1,
@@ -964,9 +860,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
 		    ));
 	    }
 
-        $this->SDK->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
+        $this->paylineSDK()->addPrivateData(array('key' => 'OrderSaleChannel', 'value' => 'DESKTOP'));
         if($this->settings['smartdisplay_parameter'] != null){
-            $this->SDK->addPrivateData(array('key' => 'display.rule.param', 'value' => $this->settings['smartdisplay_parameter']));
+            $this->paylineSDK()->addPrivateData(array('key' => 'display.rule.param', 'value' => $this->settings['smartdisplay_parameter']));
         }
 
         // TRANSACTION OPTIONS
@@ -977,16 +873,10 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $doWebPaymentRequest['languageCode'] = $this->settings['language'];
         $doWebPaymentRequest['customPaymentPageCode'] = $this->settings['custom_page_code'];
 
-        // PRIMARY CONTRACTS
-        if ($this->settings['primary_contracts'] != null && strlen($this->settings['primary_contracts']) > 0) {
-            $contracts = explode(";", $this->settings['primary_contracts']);
-            $doWebPaymentRequest['contracts'] = $contracts;
-        }
-
-        // SECONDARY CONTRACTS
-        if ($this->settings['secondary_contracts'] != null && strlen($this->settings['secondary_contracts']) > 0) {
-            $secondContracts = explode(";", $this->settings['secondary_contracts']);
-            $doWebPaymentRequest['secondContracts'] = $secondContracts;
+        // CONTRACTS
+        if(!empty($this->settings['primary_contracts'])) {
+            $doWebPaymentRequest['contracts'] = $this->settings['primary_contracts'];
+            $doWebPaymentRequest['secondContracts'] = $this->settings['primary_contracts'];
         }
 
         // Callback payline_do_web_payment_request_params
@@ -1000,16 +890,222 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         return add_query_arg(array('wc-api' => get_class($this), 'url_type'=>$urlType), home_url('/'));
     }
 
-
+    /**
+     * Return payment gateway setting by key
+     * @param $key
+     * @return false|mixed
+     */
+    protected function getConfigValueIfExists($key) {
+        if (array_key_exists($key, $this->settings) && !empty($this->settings[$key])) {
+            return $this->settings[$key];
+        }
+        return false;
+    }
 
     /**
+     * Change CTA color on widget preview
+     * @param $hex
+     * @param $strenght
+     * @param $lighter
+     * @return string
+     */
+    protected function changeColor($hex, $strenght, $lighter)
+    {
+        $hex = ltrim($hex, '#');
+
+        if (strlen($hex) == 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+
+        $factor = $lighter ? 1 + ($strenght / 100) : 1 - ($strenght / 100);
+
+        $r = max(0, min(255, intval($r * $factor)));
+        $g = max(0, min(255, intval($g * $factor)));
+        $b = max(0, min(255, intval($b * $factor)));
+
+        $newHex = sprintf("#%02x%02x%02x", $r, $g, $b);
+
+        return $newHex;
+    }
+
+    /**
+     * @return string
+     */
+    protected function generateWidgetCustomCss()
+    {
+        $retVal = ['#PaylineWidget.pl-container-lightbox {position: fixed;}'];
+
+        $enableWidgetCustomization = $this->getConfigValueIfExists('widget_settings_customize');
+
+        if ( $enableWidgetCustomization === 'no' ) {
+            return implode("\n", $retVal);
+        }
+
+        //--> Button BG Color
+        $ctaBgColor = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color');
+        $ctaBgCustomColor = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color_custom');
+
+        if ($ctaBgColor === 'custom' && $ctaBgCustomColor !== false) {
+            $ctaBgColor = $ctaBgCustomColor;
+        }
+
+        if ($ctaBgColor !== false) {
+            $retVal[] = '#PaylineWidget .pl-pay-btn { background-color: ' . $ctaBgColor . '; }';
+
+            //--> Button Hover
+            $ctaHoverColor  = '#26A434';;
+            $bgDarkStrenght    = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color_hover_darker');
+            $bgLightStrenght   = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color_hover_lighter');
+
+            if ( $bgDarkStrenght !== false ) {
+                $ctaHoverColor = $this->changeColor($ctaBgColor, $bgDarkStrenght, false );
+            } elseif($bgLightStrenght !== false) {
+                $ctaHoverColor = $this->changeColor($ctaBgColor, $bgLightStrenght, true );
+            }
+
+            if ($ctaHoverColor !== false) {
+                $retVal[] = '#PaylineWidget .pl-pay-btn:hover { background-color: ' . $ctaHoverColor . '; }';
+            }
+        }
+
+        //--> Button Text Color
+        $ctaTextColor = $this->getConfigValueIfExists('widget_settings_css_cta_text_color');
+        if ($ctaTextColor !== false) {
+            $retVal[] = '#PaylineWidget .pl-pay-btn { color: ' . $ctaTextColor . '; }';
+        }
+
+        //--> Button Font Size
+        $ctaFontSize = $this->getConfigValueIfExists('widget_settings_css_font_size');
+        if ($ctaFontSize !== false) {
+            $fontSize = '';
+            switch ($ctaFontSize) {
+                case 'big':
+                    $fontSize = '24px';
+                    break;
+
+                case 'average':
+                    $fontSize = '20px';
+                    break;
+
+                case 'small':
+                    $fontSize = '14px';
+                    break;
+            }
+            $retVal[] = '#PaylineWidget .pl-pay-btn { font-size: ' . $fontSize . '; }';
+        }
+
+        //--> Border Radius
+        $bordeRadius = $this->getConfigValueIfExists('widget_settings_css_border_radius');
+        if ($bordeRadius !== false) {
+            $cssBorderRadius = '';
+            switch ($bordeRadius) {
+                case 'none':
+                    $cssBorderRadius = '0';
+                    break;
+                case 'big':
+                    $cssBorderRadius = '24px';
+                    break;
+
+                case 'average':
+                    $cssBorderRadius = '8px';
+                    break;
+
+                case 'small':
+                    $cssBorderRadius = '6px';
+                    break;
+            }
+            $retVal[] = '#PaylineWidget .pl-pay-btn { border-radius: ' . $cssBorderRadius . '; }';
+        }
+
+        //--> Widget Background
+        $widgetBgColor = $this->getConfigValueIfExists('widget_settings_css_bg_color');
+        if ($widgetBgColor !== false) {
+            $bgColor = '';
+            switch ($widgetBgColor) {
+                case 'lighter':
+                    $bgColor = '#fefefe';
+                    break;
+                case 'darker':
+                    $bgColor = '#dfdfdf';
+                    break;
+            }
+
+            $retVal[] = '#PaylineWidget.PaylineWidget.pl-layout-tab .pl-paymentMethods { background-color: ' . $bgColor . '; }';
+            $retVal[] = '#PaylineWidget.PaylineWidget.pl-container-default .pl-pmContainer { background-color: ' . $bgColor . '; }';
+            $retVal[] = '#PaylineWidget.PaylineWidget.pl-layout-tab .pl-tab.pl-active { background-color: ' . $bgColor . '; }';
+        }
+
+        $retVal[] = '#PaylineWidget .pl-text-under-cta { text-align: center; margin-top: 26px; }';
+
+        return implode("\n", $retVal);
+    }
+
+    /**
+     * @param $orderId
+     * @param $match
+     * @return false|string
+     */
+    public function getPaylineWidget($orderId, $match = null)
+    {
+        $order = wc_get_order($orderId);
+        $token = $this->getCachedDWPDataForOrder($order, 'token', true);
+
+        // Prevent to send the request again on refresh.
+        if ( !empty( $_GET['paylinetoken'] ) ) {
+            $token = $_GET['paylinetoken'];
+        } elseif ( !$token ) {
+            $token = $this->getNewTokenForOrder($order);
+            if (empty($token)) {
+                return false;
+            }
+        }
+
+        if(is_null($match)) {
+            preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match);
+        }
+
+        return '<div id="PaylineWidget" 
+                    data-token="'.$token.'" 
+                    data-template="'.$match[1].'" 
+                    data-embeddedredirectionallowed="true" 
+                    data-event-didshowstate="eventDidshowstate" 
+                    data-event-finalstatehasbeenreached="eventFinalstatehasbeenreached">
+                </div>';
+    }
+
+    /**
+     * Todo: TO DELETE
      * @param int $order_id
      */
     function generate_payline_form($order_id) {
+    $ctaButton = $this->getConfigValueIfExists('widget_settings_cta_label');
+    $textUnderCta = $this->getConfigValueIfExists('widget_settings_text_under_cta');
+    $widgetCustomCss = $this->generateWidgetCustomCss();
 
-
+    if (!empty($widgetCustomCss)) {
+        echo '<style type="text/css">' . $widgetCustomCss . '</style>';
+    }
 
         echo '<script type="text/javascript">
+        
+const ctaLabel = "' . (!empty($ctaButton) ? strip_tags($ctaButton) : '') . '";
+const textUnderCta = "' . (!empty($textUnderCta) ? strip_tags($textUnderCta) : '') . '";
+
+window.eventDidshowstate = function (e) {
+    if ( e.state && e.state === "PAYMENT_METHODS_LIST" ) {
+        if (ctaLabel != "") {
+            jQuery(".PaylineWidget .pl-pay-btn, .PaylineWidget .pl-btn").html(ctaLabel.replace("{{amount}}", Payline.Api.getContextInfo("PaylineFormattedAmount")));
+        }
+        
+        if (textUnderCta) {
+            jQuery(".PaylineWidget .pl-pay-btn, .PaylineWidget .pl-btn").after(jQuery("<p>").html(textUnderCta).addClass("pl-text-under-cta"))
+        }
+    }
+}
 hideReceivedContext = function() {
     jQuery(".storefront-breadcrumb").hide();
     jQuery(".order_details").hide();
@@ -1040,7 +1136,6 @@ cancelPaylinePayment = function ()
 
         $order = wc_get_order($order_id);
 
-        $this->SDK = $this->getSDK();
 
         $requestParams = $this->getWebPaymentRequest($order);
 
@@ -1063,7 +1158,7 @@ cancelPaylinePayment = function ()
             if ( !empty( $_GET['paylinetoken'] ) ) {
                 $token = $_GET['paylinetoken'];
             } elseif ( !$token ) {
-                $result = $this->SDK->doWebPayment( $requestParams );
+                $result = $this->paylineSDK()->doWebPayment( $requestParams );
                 $this->debug($result, array(__METHOD__));
                 do_action( 'payline_after_do_web_payment', $result, $this );
 
@@ -1077,7 +1172,7 @@ cancelPaylinePayment = function ()
             }
 
             printf(
-                '<div id="PaylineWidget" data-token="%s" data-template="%s" data-embeddedredirectionallowed="true" data-event-finalstatehasbeenreached="eventFinalstatehasbeenreached"></div>',
+                '<div id="PaylineWidget" data-token="%s" data-template="%s" data-embeddedredirectionallowed="true" data-event-didshowstate="eventDidshowstate" data-event-finalstatehasbeenreached="eventFinalstatehasbeenreached"></div>',
                 $token,
                 $match[1]
             );
@@ -1094,7 +1189,7 @@ cancelPaylinePayment = function ()
             exit;
         } else {
             // EXECUTE
-            $result = $this->SDK->doWebPayment( $requestParams );
+            $result = $this->paylineSDK()->doWebPayment( $requestParams );
 
             $this->debug($result, array(__METHOD__));
 
@@ -1124,8 +1219,7 @@ cancelPaylinePayment = function ()
      */
     protected function payline_callback_cancel($message='') {
 
-	    $this->SDK = $this->getSDK();
-	    $res = $this->SDK->getWebPaymentDetails(array('token'=>$_GET['paylinetoken'],'version'=>$this->APIVersion));
+	    $res = $this->paylineSDK()->getWebPaymentDetails(array('token'=>$_GET['paylinetoken'],'version'=>$this->APIVersion));
 	    $order = wc_get_order($res['order']['ref']);
         if(!$order) {
             wp_redirect(wc_get_cart_url());
@@ -1173,8 +1267,7 @@ cancelPaylinePayment = function ()
             return false;
         }
 
-        $this->SDK = $this->getSDK();
-        $res = $this->SDK->getTransactionDetails(array('transactionId'=> $_GET['transactionId'],
+        $res = $this->paylineSDK()->getTransactionDetails(array('transactionId'=> $_GET['transactionId'],
             //'orderRef'=>$_GET['orderRef'],
             'version'=>$this->APIVersion));
 
@@ -1211,6 +1304,7 @@ cancelPaylinePayment = function ()
         }
 
         if(isset($_GET['order_id'])){
+            //Todo: See how to delete
             $this->generate_payline_form($_GET['order_id']);
             exit;
         }
@@ -1226,20 +1320,26 @@ cancelPaylinePayment = function ()
             exit;
         }
 
-        $this->SDK = $this->getSDK();
 
-        $res = $this->SDK->getWebPaymentDetails(array('token'=>$token,'version'=>$this->APIVersion));
+        $res = $this->paylineSDK()->getWebPaymentDetails(array('token'=>$token,'version'=>$this->APIVersion));
         $this->debug($res, array(__METHOD__));
 
         if($res['result']['code'] == PaylineSDK::ERR_CODE) {
-            $this->SDK->getLogger()->error('Unable to call Payline for token '.$token);
+            $this->paylineSDK()->getLogger()->error('Unable to call Payline for token '.$token);
             wp_redirect(wc_get_cart_url());
             die();
         } else {
             $orderId = $res['order']['ref'];
             $order = wc_get_order($orderId);
+            WC()->session->__unset('store_api_draft_order');
             if(!$order) {
                 wp_redirect(wc_get_cart_url());
+                die();
+            }
+
+            if($urlType=='resetToken'){
+                $this->getNewTokenForOrder($order);
+                wp_redirect(wc_get_checkout_url());
                 die();
             }
 
@@ -1247,11 +1347,11 @@ cancelPaylinePayment = function ()
                 //Nothing to do on notification if a transaction already exists for payline CPT
                 $transactionId = $order->get_transaction_id();
 	            $paymentMethod = $order->get_payment_method();
-	            if ($transactionId && $paymentMethod == 'payline') {
+	            if ($transactionId && $paymentMethod == 'payline_cpt') {
 		            die();
 	            }
 
-	            if (!empty($paymentMethod) && $paymentMethod != 'payline'){
+	            if (!empty($paymentMethod) && $paymentMethod != 'payline_cpt'){
 		            die();
 	            }
             }
@@ -1259,7 +1359,7 @@ cancelPaylinePayment = function ()
             $expectedToken = $this->getCachedDWPDataForOrder($order, 'token');
             if($expectedToken != $token){
                 $message = sprintf(__('Token %s does not match expected %s for order %s', 'payline'), wc_clean($token), $expectedToken, $orderId);
-                $this->SDK->getLogger()->error($message);
+                $this->paylineSDK()->getLogger()->error($message);
                 $order->add_order_note($message);
                 wp_redirect(wc_get_cart_url());
                 die($message);
@@ -1285,11 +1385,14 @@ cancelPaylinePayment = function ()
      * @param WC_Order $order
      * @param array $res
      * @return void
+     * @throws WC_Data_Exception
      */
     protected function paylineManageReturn(WC_Order $order, array $res)
     {
         $message = '';
         $status = '';
+        $order->set_payment_method($this->id);
+        $order->set_payment_method_title($this->defaultName);
         $orderId = $order->get_id();
         if($this->paylineSuccessWebPaymentDetails($order, $res)) {
             $this->paylineSetOrderPayed($order);
@@ -1390,7 +1493,6 @@ cancelPaylinePayment = function ()
             return new WP_Error( 'error', __( 'Refund failed.', 'payline' ) );
         }
 
-        $this->SDK = $this->getSDK();
 
         $paymentParams = array();
         $paymentParams['amount'] = round($amount*100);
@@ -1406,7 +1508,7 @@ cancelPaylinePayment = function ()
             'sequenceNumber' => ''
         );
 
-        $res = $this->SDK->doRefund($refundParams);
+        $res = $this->paylineSDK()->doRefund($refundParams);
         $this->debug($res, array(__METHOD__));
         if($res['result']['code'] == '00000'){
             $order->add_order_note(
@@ -1429,4 +1531,362 @@ cancelPaylinePayment = function ()
 	    return md5($customerId);
     }
 
+    /**
+     * Render given template
+     * @param $templatePath
+     * @param $data
+     * @return false|string
+     * @throws Exception
+     */
+    protected function renderTemplate($templatePath, $data = [])
+    {
+        // Vérifie si le fichier existe
+        if (!file_exists($templatePath)) {
+            throw new Exception("Le fichier de template n'existe pas : " . $templatePath);
+        }
+
+        // Extrait les données pour les rendre disponibles dans le template
+        extract($data);
+
+        // Démarre la temporisation de sortie
+        ob_start();
+
+        // Inclut le fichier de template
+        include $templatePath;
+
+        // Récupère le contenu du buffer et le nettoie
+        $content = ob_get_clean();
+
+        // Retourne le contenu généré
+        return $content;
+    }
+
+    /**
+     * Return useful data for current payment gateway settings page
+     * @return array
+     */
+    protected function getDefaultTemplateData()
+    {
+        global $woocommerce;
+
+        if(key_exists('reset', $_REQUEST) && $_REQUEST['reset'] == 'true') {
+            do_action($this->id . '_reset_admin_options');
+        }
+
+        $templateData = [];
+        $dispErrors = [];
+        $dispConfirm = [];
+        $resetLink = add_query_arg('reset', 'true', $this->admin_link);
+        $resetLink = wp_nonce_url($resetLink, 'payline_reset');
+
+
+        if (!empty($woocommerce->session->payline_reset)){
+            unset($woocommerce->session->payline_reset);
+            $templateData['reset_message'] = sprintf(__( 'Your %s configuration parameters are reset.', 'payline'), 'Payline');
+        }
+
+        //--> Display errors messages
+        if (!extension_loaded('soap')) {
+            $this->callGetMerchantSettings = false;
+            $dispErrors[] = sprintf(__( 'The SOAP extension is not enabled in your PHP installation and is required', 'payline'));
+        }
+
+        if(array_key_exists('merchant_id', $this->settings) && ($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0)){
+            $this->callGetMerchantSettings = false;
+            $dispErrors[] = sprintf(__( '%s is mandatory', 'payline'), __('Merchant ID', 'payline' ));
+        }
+        if(array_key_exists('access_key', $this->settings) && ($this->settings['access_key'] == null || strlen($this->settings['access_key']) == 0)){
+            $this->callGetMerchantSettings = false;
+            $dispErrors[] = sprintf(__( '%s is mandatory', 'payline'), __('Access Key', 'payline' ));
+        }
+
+        if(array_key_exists('primary_contracts', $this->settings) && ($this->settings['primary_contracts'] == null || empty($this->settings['primary_contracts']))){
+            $this->callGetMerchantSettings = false;
+            $dispErrors[] = __( 'Please select at least one contract in contracts tab', 'payline');
+        }
+
+        if(!isset($this->settings['pos']) || empty($this->settings['pos'])){
+            $this->callGetMerchantSettings = false;
+            $dispErrors[] = sprintf(__( '%s is mandatory', 'payline'), __('Point of Sales', 'payline' ));
+        }
+
+        //--> Check setup with Monext
+        if($this->callGetMerchantSettings){
+            $res = $this->paylineSDK()->getEncryptionKey([]);
+            if($res['result']['code'] == '00000'){
+                $dispConfirm[] = __( 'Your settings is correct, connexion with Payline is established', 'payline');
+                if($this->settings['environment'] == PaylineSDK::ENV_HOMO){
+                    $dispConfirm[] = __( 'You are in homologation mode, payments are simulated !', 'payline');
+                }
+            }else{
+                if(strcmp(WC_Gateway_Payline_CPT::BAD_CONNECT_SETTINGS_ERR, $res['result']['longMessage']) == 0){
+                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline, check your %s', 'payline'), __('PAYLINE GATEWAY ACCESS', 'payline' ))."</p>";
+                }elseif(strcmp(WC_Gateway_Payline_CPT::BAD_PROXY_SETTINGS_ERR, $res['result']['longMessage']) == 0){
+                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline, check your %s', 'payline'), __('PROXY SETTINGS', 'payline' ))."</p>";
+                }else{
+                    $dispErrors[] = "<p>".sprintf(__( 'Unable to connect to Payline (code %s : %s)', 'payline'), $res['result']['code'], $res['result']['longMessage']);
+                }
+            }
+        }
+
+        $templateData['errors'] = $dispErrors;
+        $templateData['confirmations'] = $dispConfirm;
+
+        //--> Reset link
+        $templateData['reset_link'] = $resetLink;
+        $templateData['reset_link_label'] = __('Reset configuration', 'payline');
+
+        return $templateData;
+    }
+
+    /**
+     * Merge globals setting to gateway setting. Usefull for configuration check
+     * @return void
+     */
+    protected function completeSettings()
+    {
+        $globalsSettings = get_option('woocommerce_payline_settings');
+        if(!empty($globalsSettings)){
+            unset($globalsSettings['enabled']);
+            $this->settings = array_merge($this->settings, $globalsSettings);
+        }
+    }
+
+    /**
+     * Return a list of contracts for payments settings
+     * @return array
+     */
+    public function getContractsList()
+    {
+        $optionList = get_option( 'woocommerce_payline_pos_contracts_list', []);
+        if(!empty($optionList)){
+            $optionList = unserialize($optionList);
+            $contractsList = [];
+            foreach ($optionList as $contract) {
+                $contractsList[$contract['contractNumber']] = $contract['label'];
+            }
+            return $contractsList;
+        }
+        return $optionList;
+    }
+    /**
+     * @return array
+     */
+    protected function getCaptureTriggerOptions()
+    {
+        $options = [];
+        foreach (wc_get_order_statuses() as $statusKey => $status) {
+            if(in_array($statusKey, [OrderInternalStatus::CANCELLED,
+                OrderInternalStatus::REFUNDED,
+                OrderInternalStatus::FAILED,
+                OrderInternalStatus::ON_HOLD,
+                OrderInternalStatus::PENDING,
+                DraftOrders::DB_STATUS])) {
+                continue;
+            }
+
+            $cleanStatusKey = str_replace( 'wc-', '', $statusKey );
+            $options[$cleanStatusKey]= sprintf(__('When order status is "%s"', 'payline'), __($status, 'woocommerce'));
+        }
+        return $options;
+    }
+
+    /**
+     * @param $order_id
+     * @param $previous_status
+     * @param $next_status
+     * @param $order
+     * @return bool|void
+     */
+    public function captureOnTrigger($order_id, $previous_status, $next_status, $order)
+    {
+        if(!$order || $order->get_payment_method() != $this->id || empty($order->get_transaction_id())){
+            return;
+        }
+
+        $capture_trigger_on = $this->settings['capture_trigger_on'];
+        if(!$capture_trigger_on){
+            return;
+        }
+
+        if($this->settings['payment_action'] != 100 || $capture_trigger_on != $next_status) {
+            return;
+        }
+
+        return $this->captureOrder($order);
+    }
+
+    /**
+     * @param $order
+     * @return bool|void
+     */
+    protected function captureOrder($order)
+    {
+
+        //Todo: When transaction table will be created, replace this API call by a database query
+        $txDetailsRes = $this->paylineSDK()->getTransactionDetails(array('transactionId'=> $order->get_transaction_id(),'transactionHistory'=> 'Y'));
+        $associatedTransactions = $txDetailsRes['associatedTransactionsList']['associatedTransactions'];
+        if(is_array(reset($associatedTransactions))) {
+            foreach ($txDetailsRes['associatedTransactionsList']['associatedTransactions'] as $transaction) {
+                if ($transaction['type'] == 'CAPTURE'){
+                    return;
+                }
+            }
+        }
+
+        $paymentParams = array();
+        $paymentParams['amount'] = round($order->get_total() * 100);
+        $paymentParams['currency'] = $this->_currencies[$order->get_currency()];
+        $paymentParams['action'] = 201;
+        $paymentParams['mode'] =  $this->paymentMode;
+
+        $res = $this->paylineSDK()->doCapture(array('transactionID' => $order->get_transaction_id(), 'payment'  => $paymentParams));
+        $this->debug($res, array(__METHOD__));
+
+        if($res['result']['code'] == '00000'){
+            $order->add_order_note(
+                sprintf( 'Capture %1$s %2$s - Capture ID: %3$s', round($order->get_total(), 4), $order->get_currency(), $res['transaction']['id'] )
+            );
+            return true;
+        } else {
+            $order->add_order_note(
+                sprintf( 'Capture error :"%1$s"', $res['result']['longMessage'] )
+            );
+            return false;
+        }
+    }
+
+    /**
+     * If true, add "Complete setup" button on woo payment methods list
+     * @return bool
+     */
+    public function is_account_connected()
+    {
+        if($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0)
+        {
+            return false;
+        }
+
+        if($this->settings['access_key'] == null || strlen($this->settings['access_key']) == 0)
+        {
+            return false;
+        }
+
+        if(!isset($this->settings['pos']) || $this->settings['pos'] == null || $this->settings['pos'] == "0")
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * If true, add tag "Action needed" on woo payment methods list
+     * @return bool
+     */
+    public function needs_setup()
+    {
+        if(!$this->is_account_connected())
+        {
+            $this->enabled = 'no';
+            return true;
+        }
+
+        $this->enabled = 'yes';
+        return false;
+    }
+
+    /**
+     * If true, add tag "Test mode" on woo payment methods list
+     * @return bool
+     */
+    public function is_test_mode()
+    {
+        return ($this->settings['environment'] == PaylineSDK::ENV_HOMO);
+    }
+
+    public function createManageWebWallet()
+    {
+        $contracts = [];
+        $contractsList = $this->getContractsForCurrentPos();
+        $walletId = $this->encryptWalletId(get_current_user_id());
+        $customer = new WC_Customer( get_current_user_id() );
+
+        foreach ($contractsList as $contract) {
+            if(!empty($contract['wallet'])) {
+                $contracts[] = $contract['contractNumber'];
+            }
+        }
+
+        $params = array(
+            'version' => $this->APIVersion,
+            'contractNumber' => current($contracts),
+            'walletId' => $walletId,
+            'contracts' => $contracts,
+            'buyer' => array(
+                'lastName' => $this->cleanSubstr($customer->get_last_name(), 0, 100),
+                'firstName' => $this->cleanSubstr($customer->get_first_name(), 0, 100),
+                'walletId' => $walletId,
+            ),
+            'updatePersonalDetails' => 0,
+
+            'notificationURL' => $this->get_request_url('notification'),
+            'returnURL' => $this->get_request_url('return'),
+            'cancelURL' => $this->get_request_url('cancel'),
+        );
+
+        return $this->paylineSDK()->manageWebWallet($params);
+    }
+
+    protected function getContractsForCurrentPos()
+    {
+        $currentPos         = $this->settings['pos'];
+        $enabledContracts   = $this->getContractsList();
+        $contractsList      = $this->getContractsByPosLabel($currentPos, $enabledContracts, true);
+        return $contractsList;
+    }
+
+    protected function getContractsByPosLabel($posLabel, $enabledContracts = array(), $useCache = false)
+    {
+        $posList = WC_Payline_SDK::getPointOfSales();
+        foreach ($posList as $pos) {
+            if (trim($pos['label']) == $posLabel && isset($pos['contracts']) && is_array($pos['contracts']) && isset($pos['contracts']['contract']) && is_array($pos['contracts']['contract'])) {
+                // Retrieve contracts and sort them
+                $finalContractsList = array();
+                $disabledContracts = array();
+                $contractsList = $pos['contracts']['contract'];
+
+                $firstKey = key($contractsList);
+                if(!is_numeric($firstKey) && isset($contractsList['contractNumber'])) {
+                    $contractsList = [$contractsList];
+                }
+
+                // Assign "enabled attriburte
+                foreach ($contractsList as &$contract) {
+                    $contractId = $contract['cardType'] . '-' . $contract['contractNumber'];
+                    $contract['enabled'] = (in_array($contractId, $enabledContracts));
+                    $contract['wallet'] = (in_array($contract['cardType'], ['AMEX', 'CB']));
+                    if (!$contract['enabled']) {
+                        $disabledContracts[] = $contract;
+                    }
+                }
+                // Sort contracts, enabled first
+                foreach ($enabledContracts as $enabledContractId) {
+                    foreach ($contractsList as &$contract) {
+                        $contractId = $contract['cardType'] . '-' . $contract['contractNumber'];
+                        if ($contractId == $enabledContractId) {
+                            $finalContractsList[] = $contract;
+                            break;
+                        }
+                    }
+                }
+
+                $finalContractsList = array_merge($finalContractsList, $disabledContracts);
+
+                return $finalContractsList;
+            }
+        }
+
+        return array();
+    }
 }

@@ -19,22 +19,36 @@ abstract class WC_Abstract_Recurring_Payline_NX extends WC_Abstract_Payline {
 
     public $id = 'payline_nx';
 
-    public $method_title = 'Payline N Fois';
+    protected $defaultName = 'Payline NX';
 
-    function init_form_fields() {
-        parent::init_form_fields();
+    function init_form_fields()
+    {
+        $this->form_fields = array();
 
-        $this->form_fields['payment_action']['default'] = '101';
-        $this->form_fields['payment_action']['options'] = array(
-            '101' => __('Authorization + Capture', 'payline')
+        $this->form_fields['payment_settings'] = array(
+            'title' => __( 'PAYMENT SETTINGS', 'payline' ),
+            'type' => 'title'
         );
 
-        /*
-         * Payment Settings
-         */
-        $this->form_fields[$this->id] = array(
-            'title' => strtoupper(__($this->method_title, 'payline' )),
-            'type' => 'title'
+        $this->form_fields['enabled'] = array(
+            'title' => __('Status', 'payline'),
+            'type' => 'checkbox',
+            'label' => sprintf(__('Enable %s', 'payline'), $this->defaultName),
+            'default' => 'yes'
+        );
+
+        $this->form_fields['title'] = array(
+            'title' => __('Title', 'payline'),
+            'type' => 'text',
+            'description' => __('This controls the title which the user sees during checkout.', 'payline'),
+            'default' => $this->defaultName
+        );
+
+        $this->form_fields['description'] = array(
+            'title' => __( 'Description', 'payline' ),
+            'type' => 'textarea',
+            'description' => __( 'This controls the description which the user sees during checkout.', 'payline' ),
+            'default' => sprintf(__('You will be redirected on %s secured pages at the end of your order.', 'payline'), 'Payline')
         );
 
         $this->form_fields['billing_cycle'] = array(
@@ -53,7 +67,6 @@ abstract class WC_Abstract_Recurring_Payline_NX extends WC_Abstract_Payline {
                 '90' => __('A transaction every two years', 'payline')
             )
         );
-
     }
 
     protected function getDaysForCycles($code)

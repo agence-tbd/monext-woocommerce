@@ -20,7 +20,6 @@ class WC_Gateway_Payline_NX extends WC_Abstract_Recurring_Payline_NX {
 
     public $id = 'payline_nx';
 
-    public $method_title = 'Payline N Fois';
 
     function init_form_fields()
     {
@@ -31,6 +30,21 @@ class WC_Gateway_Payline_NX extends WC_Abstract_Recurring_Payline_NX {
             'default' => '3',
             'type' => 'int',
             'description' => __('Recurring billing number. Mandatory field', 'payline')
+        );
+
+        /**
+         * Contracts settings
+         */
+        $this->form_fields['contracts'] = array(
+            'title' => __( 'CONTRACTS', 'payline' ),
+            'type' => 'title'
+        );
+
+        $this->form_fields['primary_contracts'] = array(
+            'title' => __('Primary contracts', 'payline'),
+            'type' => 'multiselect',
+            'options' => $this->getContractsList(),
+            'description' => __('Contracts displayed on web payment page.', 'payline')
         );
     }
 

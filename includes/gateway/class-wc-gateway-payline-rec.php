@@ -20,8 +20,7 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
 
     public $id = 'payline_rec';
 
-    public $method_title = 'Payline par Abonnement';
-
+    protected $defaultName = 'Payline REC';
 
     /**
      * Check if the gateway is available for use.
@@ -64,6 +63,21 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
             'type' => 'text',
             'description' => __('Define a list of product ids that can be payed with REC. Values must be separated by ;', 'payline')
         );
+
+        /**
+         * Contracts settings
+         */
+        $this->form_fields['contracts'] = array(
+            'title' => __( 'CONTRACTS', 'payline' ),
+            'type' => 'title'
+        );
+
+        $this->form_fields['primary_contracts'] = array(
+            'title' => __('Primary contracts', 'payline'),
+            'type' => 'multiselect',
+            'options' => $this->getContractsList(),
+            'description' => __('Contracts displayed on web payment page.', 'payline')
+        );
     }
 
     /**
@@ -94,6 +108,8 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
             $requestParams['recurring']['endDate'] = current_datetime()->modify( '+' .$numberDaysToLastDate. ' day' )->format( 'd/m/Y' );;
 
         }
+
+        //$requestParams['recurring']['billingLeft'] = $this->settings['max_records'];
 
         do_action('payline_before_do_web_payment_rec', $requestParams, $this);
 
