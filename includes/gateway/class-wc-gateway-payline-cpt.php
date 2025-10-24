@@ -17,7 +17,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
 
     public $id = 'payline_cpt';
 
-    protected $defaultName = 'Payline CPT';
+    protected $defaultName = 'Monext CPT';
 
     /**
      * @param WC_Refund|bool|WC_Order $order
@@ -151,7 +151,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
         $this->form_fields['custom_page_code'] = array(
             'title' => __('Custom page code', 'payline'),
             'type' => 'text',
-            'description' => __('In redirection mode, fill the code of payment page customization created in Payline Administration Center', 'payline')
+            'description' => __('In redirection mode, fill the code of payment page customization created in Monext Administration Center', 'payline')
         );
 
         /**
@@ -203,7 +203,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
                 'inshop-lightbox' => __( 'In-Shop Lightbox mode', 'payline' ),
                 'redirection' => __( 'Redirection mode', 'payline' )
             ),
-            'description' => __( 'Integration mode of the payment widget in the shop. Contact payline support for more details', 'payline' )
+            'description' => __( 'Integration mode of the payment widget in the shop. Contact Monext support for more details', 'payline' )
         );
 
          $this->form_fields['widget_settings_customize'] = array(
@@ -228,7 +228,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
-                '' => __('Payline default', 'payline'),
+                '' => __('Monext default', 'payline'),
                 '#000000' => __('Black', 'payline'),
                 '#d64c1d' => __('Red', 'payline'),
                 '#00786c' => __('Green', 'payline'),
@@ -247,7 +247,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
 
         $pcRangeOptions = range(10, 30, 10);
         $rangeOptions = [
-            '' => __('Payline default', 'payline'),
+            '' => __('Monext default', 'payline'),
         ];
         foreach ($pcRangeOptions AS $value) {
             $rangeOptions[$value] = $value . ' %';
@@ -272,7 +272,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
-                '' => __('Payline default', 'payline'),
+                '' => __('Monext default', 'payline'),
                 '#000000' => __('Black', 'payline'),
                 '#ffffff' => __('White', 'payline')
             ]
@@ -283,7 +283,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
-                '' => __('Payline default', 'payline'),
+                '' => __('Monext default', 'payline'),
                 'small' => __('Small', 'payline'),
                 'average' => __('Average', 'payline'),
                 'big' => __('Big', 'payline')
@@ -295,7 +295,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
-                '' => __('Payline default', 'payline'),
+                '' => __('Monext default', 'payline'),
                 'none' => __('None', 'payline'),
                 'small' => __('Small', 'payline'),
                 'average' => __('Average', 'payline'),
@@ -308,7 +308,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'type' => 'select',
             'default' => __('', 'payline'),
             'options' => [
-                '' => __('Payline default', 'payline'),
+                '' => __('Monext default', 'payline'),
                 'lighter' => __('Lighter', 'payline'),
                 'darker' => __('Darker', 'payline'),
             ]

@@ -61,7 +61,7 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
 
     public function admin_options() {
         $templateData = $this->getDefaultTemplateData();
-        echo $this->renderTemplate(__DIR__ . '/views/backend/settings/payline.phtml', $templateData);
+        echo $this->renderTemplate(__DIR__ . '/views/backend/settings/payline.php', $templateData);
     }
 
     public function init_form_fields()
@@ -94,13 +94,13 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
             'title' => __('Merchant ID', 'payline'),
             'type' => 'text',
             'default' => '',
-            'description' => __('Your Payline account identifier', 'payline')
+            'description' => __('Your Monext account identifier', 'payline')
         );
         $fields['access_key'] = array(
             'title' => __('Access key', 'payline'),
             'type' => 'text',
             'default' => '',
-            'description' => sprintf(__( 'Password used to call %s web services (available in the %s administration center)', 'payline'), 'Payline', 'Payline')
+            'description' => sprintf(__( 'Password used to call %s web services (available in the %s administration center)', 'payline'), 'Monext', 'Monext')
         );
         $fields['environment'] = array(
             'title' => __('Target environment', 'payline'),
@@ -110,13 +110,13 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
                 PaylineSDK::ENV_HOMO => __('Homologation', 'payline'),
                 PaylineSDK::ENV_PROD => __('Production', 'payline')
             ),
-            'description' => __('Payline destination environement of your requests', 'payline')
+            'description' => __('Monext destination environement of your requests', 'payline')
         );
 
         $fields['pos'] = array(
             'title' => __('Point of Sales', 'payline'),
             'type' => 'select',
-            'description' => __('If the list is empty, please check your Payline account identifier and resave', 'payline'),
+            'description' => __('If the list is empty, please check your Monext account identifier and resave', 'payline'),
             'options' => $this->getPointOfSalesList()
         );
 
@@ -162,7 +162,7 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
                 'en' => __('en', 'payline'),
                 'pt' => __('pt', 'payline')
             ),
-            'description' => __('Language used to display Payline web payment pages', 'payline')
+            'description' => __('Language used to display Monext web payment pages', 'payline')
         );
 
         return $fields;

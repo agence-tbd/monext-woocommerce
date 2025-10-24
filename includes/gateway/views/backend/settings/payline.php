@@ -1,3 +1,6 @@
+<?php
+?>
+
 <style>
     #paylineSettings {
         .payline_settings_hero__container {
@@ -51,16 +54,16 @@
         <img src="<?php echo WCPAYLINE_PLUGIN_URL . 'assets/images/logo-monext.svg'?>" alt="Monext" width="250" />
         <h1><?= __('Welcome to Monext Payments', 'payline') ?></h1>
         <p>
-            <?php echo "Payline extension v".$this->extensionVersion;?><br/>
-            Developed by <a href="https://www.monext.fr/retail" target="#">Monext</a> for WooCommerce<br/>
-            For any question please contact Payline support<br/>
+            <?php echo "Monext extension v".$this->extensionVersion;?><br/>
+            <?= __('Developed by <a href="https://www.monext.fr/retail" target="#">Monext</a> for WooCommerce', 'payline') ?><br/>
+            <?= __('For any question please contact Monext support', 'payline') ?><br/>
         </p>
 
         <nav>
             <ul>
-                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt') ?>"><?= __('Setup Standard payment (CPT)') ?></a></li>
-                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec') ?>"><?= __('Setup Installment Payment (REC)') ?></a></li>
-                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx') ?>"><?= __('Setup Subscription payment (NX)') ?></a></li>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt') ?>"><?= __('Setup Standard payment (CPT)', 'payline') ?></a></li>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec') ?>"><?= __('Setup Installment Payment (REC)', 'payline') ?></a></li>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx') ?>"><?= __('Setup Subscription payment (NX)', 'payline') ?></a></li>
             </ul>
         </nav>
     </div>
@@ -89,9 +92,9 @@
     </table>
 
     <nav class="nav-tab-wrapper woo-nav-tab-wrapper" id="settingsFormNav" style="margin-top: 35px;">
-        <a href="#" data-tab="advancedSettings" class="nav-tab nav-tab-active">Advanced setting</a>
-        <a href="#" data-tab="errorMessages" class="nav-tab">Error Messages</a>
-        <a href="#" data-tab="proxySetting" class="nav-tab">Proxy setting</a>
+        <a href="#" data-tab="advancedSettings" class="nav-tab nav-tab-active"><?= __('Advanced setting', 'payline') ?></a>
+        <a href="#" data-tab="errorMessages" class="nav-tab"><?= __('Error Messages', 'payline') ?></a>
+        <a href="#" data-tab="proxySetting" class="nav-tab"><?= __('Proxy setting', 'payline') ?></a>
     </nav>
     <div id="paylineSettingsSubForms">
         <table class="form-table" id="advancedSettings">

@@ -241,7 +241,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             'refunds'
         );
 
-        $this->order_button_text  = __( 'Pay via Payline', 'payline' );
+        $this->order_button_text  = __( 'Pay via Monext', 'payline' );
 
         // Load the form fields.
         $this->init_form_fields();
@@ -396,7 +396,7 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     public function admin_options() {
         $templateData = $this->getDefaultTemplateData();
         $templateData['section'] = $this->id;
-        echo $this->renderTemplate(__DIR__ . '/views/backend/settings/payline-payments-settings.phtml', $templateData);
+        echo $this->renderTemplate(__DIR__ . '/views/backend/settings/payline-payments-settings.php', $templateData);
     }
 
     function reset_admin_options() {
@@ -1404,7 +1404,7 @@ cancelPaylinePayment = function ()
             $order->update_meta_data( 'Payment mean', $res['card']['type']);
             $order->update_meta_data( 'Card expiry', $res['card']['expirationDate']);
             //Implicit save with update_status
-            $order->update_status('on-hold', __('Fraud alert. See details in Payline administration center', 'payline'));
+            $order->update_status('on-hold', __('Fraud alert. See details in Monext administration center', 'payline'));
         } elseif ($res['result']['code'] == '02306' || $res['result']['code'] == '02533') {
             $order->add_order_note(__('Payment in progress', 'payline'));
             wc_add_notice( __( 'Payment in progress', 'payline' ), 'notice' );
@@ -1614,17 +1614,17 @@ cancelPaylinePayment = function ()
         if($this->callGetMerchantSettings){
             $res = $this->paylineSDK()->getEncryptionKey([]);
             if($res['result']['code'] == '00000'){
-                $dispConfirm[] = __( 'Your settings is correct, connexion with Payline is established', 'payline');
+                $dispConfirm[] = __( 'Your settings is correct, connexion with Monext is established', 'payline');
                 if($this->settings['environment'] == PaylineSDK::ENV_HOMO){
                     $dispConfirm[] = __( 'You are in homologation mode, payments are simulated !', 'payline');
                 }
             }else{
                 if(strcmp(WC_Gateway_Payline_CPT::BAD_CONNECT_SETTINGS_ERR, $res['result']['longMessage']) == 0){
-                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline, check your %s', 'payline'), __('PAYLINE GATEWAY ACCESS', 'payline' ))."</p>";
+                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Monext, check your %s', 'payline'), __('MONEXT GATEWAY ACCESS', 'payline' ))."</p>";
                 }elseif(strcmp(WC_Gateway_Payline_CPT::BAD_PROXY_SETTINGS_ERR, $res['result']['longMessage']) == 0){
-                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Payline, check your %s', 'payline'), __('PROXY SETTINGS', 'payline' ))."</p>";
+                    $this->disp_errors .= "<p>".sprintf(__( 'Unable to connect to Monext, check your %s', 'payline'), __('PROXY SETTINGS', 'payline' ))."</p>";
                 }else{
-                    $dispErrors[] = "<p>".sprintf(__( 'Unable to connect to Payline (code %s : %s)', 'payline'), $res['result']['code'], $res['result']['longMessage']);
+                    $dispErrors[] = "<p>".sprintf(__( 'Unable to connect to Monext (code %s : %s)', 'payline'), $res['result']['code'], $res['result']['longMessage']);
                 }
             }
         }
@@ -1762,6 +1762,11 @@ cancelPaylinePayment = function ()
      */
     public function is_account_connected()
     {
+        if ( !array_key_exists('merchant_id', $this->settings))
+        {
+            return false;
+
+        }
         if($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0)
         {
             return false;

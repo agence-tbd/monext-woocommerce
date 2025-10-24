@@ -19,7 +19,7 @@ abstract class WC_Abstract_Recurring_Payline_NX extends WC_Abstract_Payline {
 
     public $id = 'payline_nx';
 
-    protected $defaultName = 'Payline NX';
+    protected $defaultName = 'Monext NX';
 
     function init_form_fields()
     {

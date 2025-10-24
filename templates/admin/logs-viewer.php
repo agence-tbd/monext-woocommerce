@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
  */
 ?>
 <div class="wrap">
-    <h1 class="wp-heading-inline"><?php echo esc_html__('Payline Logs Viewer', 'payline'); ?></h1>
+    <h1 class="wp-heading-inline"><?php echo esc_html__('Monext Logs Viewer', 'payline'); ?></h1>
     <hr class="wp-header-end">
     <div id="poststuff">
         <div id="post-body" class="metabox-holder columns-1">

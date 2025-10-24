@@ -1,7 +1,7 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { __ } from '@wordpress/i18n';
 import { getPaymentMethodData } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
+import { __ } from '@wordpress/i18n';
 import WidgetPayline from "../components/WidgetPayline";
 
 /**
@@ -11,7 +11,7 @@ import { PAYMENT_METHOD_NAME } from './constants';
 
 const settings = getPaymentMethodData( PAYMENT_METHOD_NAME, {} );
 const defaultLabel = __(
-    'Payline NX',
+    'Monext NX',
     'payline'
 );
 const label = decodeEntities( settings?.title || '' ) || defaultLabel;

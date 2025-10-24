@@ -128,10 +128,6 @@ msgstr "Activer le portefeuille"
 msgid "fr"
 msgstr "fr"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1407
-msgid "Fraud alert. See details in Payline administration center"
-msgstr "Alerte sur tentative de fraudeVoir les détail dans le centre d'administration de  Payline"
-
 #: includes/gateway/class-wc-gateway-payline.php:110
 msgid "Homologation"
 msgstr "Homologation (test)"
@@ -154,19 +150,6 @@ msgstr "https://docs.payline.com/display/DT/Plugin+WooCommerce"
 msgid "In redirection mode, fill the code of payment page customization created in Payline Administration Center"
 msgstr "En mode redirection vous pouvez indiquer le code de la page personnalisée de paiement, créée dans le centre d'administration de  Payline"
 
-#: includes/gateway/class-wc-gateway-payline-cpt.php:206
-msgid "Integration mode of the payment widget in the shop. Contact payline support for more details"
-msgstr "Mode d'intégration du widget de paiement dans la boutique. Contacter le support payline pour plus de détails"
-
-#. Description of the plugin
-#: woocommerce-payline.php
-msgid "integrations of Payline payment solution in your WooCommerce store"
-msgstr "intégrations de solution de paiement Payline dans votre magasin de WooCommerce"
-
-#: includes/gateway/class-wc-gateway-payline.php:165
-msgid "Language used to display Payline web payment pages"
-msgstr "Langue utilisée pour afficher les pages de paiement Payline web"
-
 #: includes/gateway/class-wc-gateway-payline.php:232
 msgid "Login"
 msgstr "Utilisateur"
@@ -178,8 +161,9 @@ msgstr "Nombre maximum d'échéances"
 #: includes/gateway/class-wc-gateway-abstract-payline.php:1596
 #: includes/gateway/class-wc-gateway-payline.php:94
 msgid "Merchant ID"
-msgstr "Identifiant Payline"
+msgstr "Identifiant Monext"
 
+#. Plugin Name of the plugin
 #. Author of the plugin
 #: woocommerce-payline.php
 msgid "Monext"
@@ -222,26 +206,9 @@ msgstr "Mot de passe"
 msgid "Password used to call %s web services (available in the %s administration center)"
 msgstr "Mot de passe utilisé pour appeler les services web %s (disponible dans le centre d'administration %s)"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:244
-msgid "Pay via Payline"
-msgstr "Payer avec Payline"
-
 #: includes/gateway/class-wc-gateway-payline-cpt.php:141
 msgid "Payed order status"
 msgstr "Statut commande payée"
-
-#. Plugin Name of the plugin
-#: woocommerce-payline.php
-msgid "Payline"
-msgstr "Payline"
-
-#: includes/gateway/class-wc-gateway-payline.php:113
-msgid "Payline destination environement of your requests"
-msgstr "Environnement de destination Payline de vos demandes"
-
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1623
-msgid "PAYLINE GATEWAY ACCESS"
-msgstr "ACCES PASSERELLE PAYLINE"
 
 #: includes/gateway/class-wc-gateway-abstract-payline.php:1112
 msgid "Payment"
@@ -369,17 +336,6 @@ msgstr "Deux échéances par mois"
 msgid "Type of transaction created after a payment"
 msgstr "Type de transaction créée après un paiement"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1627
-#, php-format
-msgid "Unable to connect to Payline (code %s : %s)"
-msgstr "Impossible de se connecter à Payline (Code%s:%s)"
-
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1623
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1625
-#, php-format
-msgid "Unable to connect to Payline, check your %s"
-msgstr "Impossible de se connecter à Payline, vérifiez votre%s"
-
 #: includes/gateway/class-wc-gateway-payline-cpt.php:100
 msgid "Wallet"
 msgstr "Portefeuille"
@@ -399,14 +355,6 @@ msgstr "Vous allez être redirigé sur les pages sécurisées de %s à la fin de
 msgid "Your %s configuration parameters are reset."
 msgstr "Les paramètres de configuration de votre %s sont réinitialisés."
 
-#: includes/gateway/class-wc-gateway-payline.php:97
-msgid "Your Payline account identifier"
-msgstr "Votre identifiant de compte Payline"
-
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1617
-msgid "Your settings is correct, connexion with Payline is established"
-msgstr "Vos paramètres sont corrects, connexion avec Payline établie"
-
 #: includes/gateway/class-wc-gateway-abstract-payline.php:308
 msgid "Payment on hold"
 msgstr "Paiement en attente"
@@ -425,12 +373,6 @@ msgstr "Le paiement a été annulé."
 msgid "Payment cannot be canceled now. Please contact us."
 msgstr "Le paiement ne peut pas être annulé maintenant. Veuillez nous contacter."
 
-#: templates/admin/logs-viewer.php:11
-#: woocommerce-payline.php:284
-#: woocommerce-payline.php:285
-msgid "Payline Logs Viewer"
-msgstr "Visionneur de logs Payline"
-
 #: templates/admin/logs-viewer.php:20
 #: templates/admin/logs-viewer.php:26
 #: templates/admin/logs-viewer.php:42
@@ -448,21 +390,6 @@ msgstr "Contenu du fichier"
 #: woocommerce-payline.php:161
 msgid "Logs Viewer"
 msgstr "Visionneur de logs"
-
-#: assets/js/payment-method/payline-cpt/payment-method.js:13
-#: build/wc-payment-method-payline-cpt.js:1
-msgid "Payline CPT"
-msgstr "Payline CPT"
-
-#: assets/js/payment-method/payline-nx/payment-method.js:13
-#: build/wc-payment-method-payline-nx.js:1
-msgid "Payline NX"
-msgstr "Payline NX"
-
-#: assets/js/payment-method/payline-rec/payment-method.js:12
-#: build/wc-payment-method-payline-rec.js:1
-msgid "Payline REC"
-msgstr "Payline REC"
 
 #: includes/gateway/class-wc-gateway-payline.php:143
 msgid "Smartdisplay parameter"
@@ -549,15 +476,6 @@ msgstr "Confirmer et payer"
 msgid "For example : \"Confirm and pay {{amount}}\" will display <em>Confirm and pay 142.56 EUR</em><br />{{amount}} is optional<br /><strong>No html tags allowed</strong>"
 msgstr "Par exemple : « Confirmer et payer {{amount}} » affichera <em>Confirmer et payer 142.56 EUR</em><br />{{amount}} est facultatif<br /><strong>Les balises HTML ne sont pas autorisées</strong>"
 
-#: includes/gateway/class-wc-gateway-payline-cpt.php:231
-#: includes/gateway/class-wc-gateway-payline-cpt.php:250
-#: includes/gateway/class-wc-gateway-payline-cpt.php:275
-#: includes/gateway/class-wc-gateway-payline-cpt.php:286
-#: includes/gateway/class-wc-gateway-payline-cpt.php:298
-#: includes/gateway/class-wc-gateway-payline-cpt.php:311
-msgid "Payline default"
-msgstr "Défaut Payline"
-
 #: includes/gateway/class-wc-gateway-payline-cpt.php:232
 #: includes/gateway/class-wc-gateway-payline-cpt.php:276
 msgid "Black"
@@ -633,10 +551,6 @@ msgstr "Texte sous le bouton"
 #: includes/gateway/class-wc-gateway-payline-cpt.php:328
 msgid "Preview CTA"
 msgstr "Aperçu du bouton"
-
-#: includes/gateway/class-wc-gateway-payline.php:119
-msgid "If the list is empty, please check your Payline account identifier and resave"
-msgstr "Si la liste est vide, veuillez vérifier l’identifiant de votre compte Payline et enregistrer à nouveau"
 
 #: includes/gateway/class-wc-gateway-payline.php:267
 msgid "Please chose a Point of Sale to get contracts"
@@ -715,3 +629,82 @@ msgstr "Mon portefeuille"
 #: includes/gateway/class-wc-gateway-payline.php:35
 msgid "Accept multiple online payments methods"
 msgstr "Acceptez plusieurs modes de paiement en ligne"
+
+#. Description of the plugin
+#: woocommerce-payline.php
+msgid "integrations of Monext payment solution in your WooCommerce store"
+msgstr "intégrations de solution de paiement Monext dans votre magasin de WooCommerce"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:244
+msgid "Pay via Monext"
+msgstr "Payer avec Monext"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1407
+msgid "Fraud alert. See details in Monext administration center"
+msgstr "Alerte sur tentative de fraudeVoir les détail dans le centre d'administration de Payline"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1617
+msgid "Your settings is correct, connexion with Monext is established"
+msgstr "Vos paramètres sont corrects, connexion avec Monext établie"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1623
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1625
+#, php-format
+msgid "Unable to connect to Monext, check your %s"
+msgstr "Impossible de se connecter à Monext, vérifiez votre%s"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1623
+msgid "MONEXT GATEWAY ACCESS"
+msgstr "ACCES PASSERELLE ACCESS"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1627
+#, php-format
+msgid "Unable to connect to Monext (code %s : %s)"
+msgstr "Impossible de se connecter à Monext (Code%s:%s)"
+
+#: includes/gateway/class-wc-gateway-payline-cpt.php:231
+#: includes/gateway/class-wc-gateway-payline-cpt.php:250
+#: includes/gateway/class-wc-gateway-payline-cpt.php:275
+#: includes/gateway/class-wc-gateway-payline-cpt.php:286
+#: includes/gateway/class-wc-gateway-payline-cpt.php:298
+#: includes/gateway/class-wc-gateway-payline-cpt.php:311
+msgid "Monext default"
+msgstr "Défaut Monext"
+
+#: includes/gateway/class-wc-gateway-payline.php:97
+msgid "Your Monext account identifier"
+msgstr ""
+
+#: includes/gateway/class-wc-gateway-payline.php:113
+msgid "Monext destination environement of your requests"
+msgstr "Environnement de destination Monext de vos demandes"
+
+#: includes/gateway/class-wc-gateway-payline.php:119
+msgid "If the list is empty, please check your Monext account identifier and resave"
+msgstr "Si la liste est vide, veuillez vérifier l’identifiant de votre compte Monext et enregistrer à nouveau"
+
+#: includes/gateway/class-wc-gateway-payline.php:165
+msgid "Language used to display Monext web payment pages"
+msgstr "Langue utilisée pour afficher les pages de paiement Monext web"
+
+#: templates/admin/logs-viewer.php:11
+#: woocommerce-payline.php:284
+#: woocommerce-payline.php:285
+msgid "Monext Logs Viewer"
+msgstr "Visionneur de logs Monext"
+
+#: assets/js/payment-method/payline-cpt/payment-method.js:13
+msgid "Monext CPT"
+msgstr "Monext CPT"
+
+#: assets/js/payment-method/payline-nx/payment-method.js:13
+msgid "Monext NX"
+msgstr "Monext NX"
+
+#: assets/js/payment-method/payline-rec/payment-method.js:12
+msgid "Monext REC"
+msgstr "Monext REC"
+
+#: includes/gateway/class-wc-gateway-payline-cpt.php:206
+msgid "Integration mode of the payment widget in the shop. Contact Monext support for more details"
+msgstr "Mode d'intégration du widget de paiement dans la boutique. Contacter le support Monext pour plus de détails"

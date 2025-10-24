@@ -11,7 +11,7 @@ import { PAYMENT_METHOD_NAME } from './constants';
 
 const settings = getPaymentMethodData( 'payline_cpt', {} );
 const defaultLabel = __(
-    'Payline CPT',
+    'Monext CPT',
     'payline'
 );
 const label = decodeEntities( settings?.title || '' ) || defaultLabel;
