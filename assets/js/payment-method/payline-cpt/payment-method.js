@@ -47,7 +47,7 @@ const paylineCptPaymentMethod = {
     label: <Label />,
     content: <Content />,
     edit: <Content />,
-    canMakePayment: () => true,
+    canMakePayment: () => settings?.canMakePayment,
     ariaLabel: label,
     supports: {
         features: settings?.supports ?? [],

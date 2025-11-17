@@ -432,8 +432,16 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         }
     }
 
-    function is_available() {
-        return parent::is_available();
+    /**
+     * @return bool
+     */
+    function is_available()
+    {
+        $is_available = parent::is_available();
+        if ($is_available && !empty($this->settings['primary_contracts'])) {
+            return true;
+        }
+        return false;
     }
 
     /**
