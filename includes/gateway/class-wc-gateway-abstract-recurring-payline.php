@@ -34,7 +34,7 @@ abstract class WC_Abstract_Recurring_Payline_NX extends WC_Abstract_Payline {
             'title' => __('Status', 'payline'),
             'type' => 'checkbox',
             'label' => sprintf(__('Enable %s', 'payline'), $this->defaultName),
-            'default' => 'yes'
+            'default' => 'no'
         );
 
         $this->form_fields['title'] = array(
@@ -42,6 +42,11 @@ abstract class WC_Abstract_Recurring_Payline_NX extends WC_Abstract_Payline {
             'type' => 'text',
             'description' => __('This controls the title which the user sees during checkout.', 'payline'),
             'default' => $this->defaultName
+        );
+
+        $this->form_fields['widget_integration'] = array(
+            'type' => 'hidden',
+            'default' => "redirection"
         );
 
         $this->form_fields['description'] = array(

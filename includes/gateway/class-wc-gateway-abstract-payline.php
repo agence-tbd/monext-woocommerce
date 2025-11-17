@@ -1770,22 +1770,22 @@ cancelPaylinePayment = function ()
      */
     public function is_account_connected()
     {
-        if ( !array_key_exists('merchant_id', $this->settings))
+        if(empty($this->settings['merchant_id']))
         {
             return false;
 
         }
-        if($this->settings['merchant_id'] == null || strlen($this->settings['merchant_id']) == 0)
+        if(empty($this->settings['merchant_id']))
         {
             return false;
         }
 
-        if($this->settings['access_key'] == null || strlen($this->settings['access_key']) == 0)
+        if(empty($this->settings['access_key']))
         {
             return false;
         }
 
-        if(!isset($this->settings['pos']) || $this->settings['pos'] == null || $this->settings['pos'] == "0")
+        if(empty($this->settings['pos']))
         {
             return false;
         }
@@ -1815,6 +1815,9 @@ cancelPaylinePayment = function ()
      */
     public function is_test_mode()
     {
+        if(empty($this->settings['environment'])){
+            return false;
+        }
         return ($this->settings['environment'] == PaylineSDK::ENV_HOMO);
     }
 

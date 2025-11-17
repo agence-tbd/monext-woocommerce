@@ -80,7 +80,7 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
             'title' => __('Status', 'payline'),
             'type' => 'checkbox',
             'label' => sprintf(__('Enable %s', 'payline'), $this->defaultName),
-            'default' => 'yes'
+            'default' => 'no'
         );
 
         $this->form_fields['title'] = array(
