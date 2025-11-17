@@ -19,9 +19,13 @@ const label = decodeEntities( settings?.title || '' ) || defaultLabel;
 /**
  * Content component
  */
-const Content = () => {
+const Content = (props) => {
+
+    const paymentDescription = decodeEntities(settings?.description || '');
+
     return (
-        <WidgetPayline settings={ settings } checkoutContext={props} />
+        <>{ settings.widget_integration === 'redirection' ? <p>{paymentDescription}</p> : <WidgetPayline settings={ settings } checkoutContext={props} /> }</>
+
     );
 };
 
