@@ -34,14 +34,10 @@ use Automattic\WooCommerce\StoreApi\Utilities\OrderController;
 
 if (!defined('ABSPATH')) exit;
 
-//To update for each new script migration
-if ( ! defined( 'WCPAYLINE_UPGRADE_VERSION' ) ) {
-    define( 'WCPAYLINE_UPGRADE_VERSION', '1.5.6' );
-}
-
 define('WCPAYLINE_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPAYLINE_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPAYLINE_PLUGIN_CLASS', plugin_basename(__FILE__));
+define('WCPAYLINE_PLUGIN_VERSION', '1.5.6');
 
 //require_once plugin_dir_path(__FILE__) . 'includes/admin/payline-logs-viewer.php';
 

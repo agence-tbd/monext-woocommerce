@@ -15,8 +15,6 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
 
     protected $callGetMerchantSettings = true;
 
-    protected $extensionVersion = '1.5.6';
-
     /** @var Payline\PaylineSDK $SDK */
     protected $SDK;
 

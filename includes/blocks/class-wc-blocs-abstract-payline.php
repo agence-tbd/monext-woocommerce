@@ -55,7 +55,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
 		wp_register_script( $this->handle,
 			WCPAYLINE_PLUGIN_URL . 'build/' . $this->handle . '.js',
 			[],
-			null,
+            WCPAYLINE_PLUGIN_VERSION,
 			true );
 
 		return [ $this->handle ];
