@@ -30,7 +30,7 @@ class WC_Payline_SDK_Test extends TestCase
         $result = ['result' => ['code' => '12345']];
 
         $this->assertTrue($ref->invoke(null, $result, ['12345']));
-        $this->assertFalse($ref->invoke(null, $result, ['5321']));
+        $this->assertFalse($ref->invoke(null, $result, ['5321666']));
     }
 
     /**
