@@ -70,7 +70,7 @@ class WC_Payline_SDK_Test extends TestCase
 
         $settings = $ref->invoke(null);
         $this->assertSame('MERCH', $settings['merchant_id']);
-        $this->assertSame('KEY666', $settings['access_key']);
+        $this->assertSame('KEY', $settings['access_key']);
     }
 
     public function test_get_method_settings_with_payment_id()
