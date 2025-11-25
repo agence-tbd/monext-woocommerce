@@ -79,7 +79,7 @@
 
     #buttonPreview:hover {
         background-color: #1c7b27;
-        text-decoration: underline;
+        text-decoration: none;
     }
 </style>
 
@@ -229,15 +229,20 @@ $pageTitle = !empty($section) && !empty($title[$section]) ? $title[$section] : '
         let b = num & 0xFF;
 
         if (lighten) {
-            amount = 1 + (amount / 100);
+            // Ajoute une part de blanc proportionnelle à amount
+            r = Math.round(r + (255 - r) * (amount / 100));
+            g = Math.round(g + (255 - g) * (amount / 100));
+            b = Math.round(b + (255 - b) * (amount / 100));
         } else {
-            amount = 1 - (amount / 100);
+            // Fonce la couleur en multipliant par (1 - amount/100)
+            r = Math.round(r * (1 - amount / 100));
+            g = Math.round(g * (1 - amount / 100));
+            b = Math.round(b * (1 - amount / 100));
         }
 
-
-        r = Math.min(255, Math.round(r * amount));
-        g = Math.min(255, Math.round(g * amount));
-        b = Math.min(255, Math.round(b * amount));
+        r = Math.min(255, Math.max(0, r));
+        g = Math.min(255, Math.max(0, g));
+        b = Math.min(255, Math.max(0, b));
 
         return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
     }
@@ -248,8 +253,7 @@ $pageTitle = !empty($section) && !empty($title[$section]) ? $title[$section] : '
     const inputCtaText = document.getElementById("woocommerce_payline_cpt_widget_settings_cta_label");
     const ctaBgColorSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color");
     const ctaBgColorCustom = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_custom");
-    const ctaHoverDarkerSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_hover_darker");
-    const ctaHoverLighterSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_hover_lighter");
+    const ctaHoverSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_bg_color_hover");
     const ctaColorSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_cta_text_color");
     const ctaFontSizeSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_font_size");
     const ctaBorderRadiusSelect = document.getElementById("woocommerce_payline_cpt_widget_settings_css_border_radius");
@@ -461,32 +465,17 @@ $pageTitle = !empty($section) && !empty($title[$section]) ? $title[$section] : '
     if (previewButton) {
         //--> Couleur du hover
         previewButton.addEventListener('mouseover', function() {
-            let hoverCtaBgColor = '#1c7b27';
+            const hoverCtaBgColor = getCtaBgColor();
             let isLighter = true;
             let amount = 0;
 
-            //--> Darker version
-            if (ctaHoverDarkerSelect) {
-                const darkerAmountValue = ctaHoverDarkerSelect.value.trim();
-                if (darkerAmountValue > 0) {
-                    amount = parseInt(darkerAmountValue);
-                    hoverCtaBgColor = getCtaBgColor();
-                    isLighter = false;
-                }
-
-            }
-
-            //--> Lighter version
-            if (ctaHoverLighterSelect) {
-                const lighterAmountValue = ctaHoverLighterSelect.value.trim();
-                if (lighterAmountValue > 0) {
-                    amount = parseInt(lighterAmountValue);
-                    hoverCtaBgColor = getCtaBgColor();
-                    isLighter = true;
+            if (ctaHoverSelect) {
+                const hoverValue = parseInt(ctaHoverSelect.value.trim());
+                if (hoverValue) {
+                    isLighter = hoverValue > 0;
+                    amount = Math.abs(hoverValue);
                 }
             }
-
-
             previewButton.style.backgroundColor = adjustHexColor(hoverCtaBgColor, amount, isLighter); // couleur de hover
         });
 

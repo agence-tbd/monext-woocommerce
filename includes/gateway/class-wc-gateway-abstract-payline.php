@@ -929,11 +929,19 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         $g = hexdec(substr($hex, 2, 2));
         $b = hexdec(substr($hex, 4, 2));
 
-        $factor = $lighter ? 1 + ($strenght / 100) : 1 - ($strenght / 100);
+        if ($lighter) {
+            $r = intval($r + (255 - $r) * ($strenght / 100));
+            $g = intval($g + (255 - $g) * ($strenght / 100));
+            $b = intval($b + (255 - $b) * ($strenght / 100));
+        } else {
+            $r = intval($r * (1 - $strenght / 100));
+            $g = intval($g * (1 - $strenght / 100));
+            $b = intval($b * (1 - $strenght / 100));
+        }
 
-        $r = max(0, min(255, intval($r * $factor)));
-        $g = max(0, min(255, intval($g * $factor)));
-        $b = max(0, min(255, intval($b * $factor)));
+        $r = max(0, min(255, $r));
+        $g = max(0, min(255, $g));
+        $b = max(0, min(255, $b));
 
         $newHex = sprintf("#%02x%02x%02x", $r, $g, $b);
 
@@ -965,14 +973,13 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             $retVal[] = '#PaylineWidget .pl-pay-btn { background-color: ' . $ctaBgColor . '; }';
 
             //--> Button Hover
-            $ctaHoverColor  = '#26A434';;
-            $bgDarkStrenght    = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color_hover_darker');
-            $bgLightStrenght   = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color_hover_lighter');
+            $ctaHoverColor  = $ctaBgColor;
+            $bgHoverColor   = $this->getConfigValueIfExists('widget_settings_css_cta_bg_color_hover');
 
-            if ( $bgDarkStrenght !== false ) {
-                $ctaHoverColor = $this->changeColor($ctaBgColor, $bgDarkStrenght, false );
-            } elseif($bgLightStrenght !== false) {
-                $ctaHoverColor = $this->changeColor($ctaBgColor, $bgLightStrenght, true );
+            if ($bgHoverColor !== false) {
+                $isLight = $bgHoverColor > 0;
+                $amount = abs($bgHoverColor);
+                $ctaHoverColor = $this->changeColor($ctaBgColor, $amount, $isLight );
             }
 
             if ($ctaHoverColor !== false) {
