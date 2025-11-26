@@ -38,47 +38,57 @@ You can also check [our documentation](https://docs.monext.fr/display/DT/Payment
 
 ### Requirements
 
-Theme need to be fully compatible with Woocommerce
+Theme need to be fully compatible with Woocommerce (may work even if theme is flagged as "Not declared")
 ![Screenshot showing theme compatibility in backoffice](doc/requirement_theme.png)
 
 ### Environment (Development, QA validation)
 * WordPress version: 6.8.1
 * WooCommerce version: 9.8.5
+* php 8.4
 
 ### Installation process
 
-See https://wordpress.org/documentation/article/manage-plugins/#installing-plugins-1
+You will need to download the last available released package ( **woocommerce-payline_vx.x.x.zip**
+) from the [Github Releases page](https://github.com/Monext/monext-woocommerce/releases) 
+
+
+![Screenshot showing release package github screen](doc/github_release_screen.png)
+
+
+See installation documentation
+   * [Wordpress: Mnagae plugins](https://wordpress.org/documentation/article/manage-plugins/#upload-via-wordpress-admin)
+   * [Monext: WooCommerce Plugin integration](https://docs.monext.fr/spaces/DT/pages/796335253/WooCommerce+Plugin+-+Integration)
 
 ## Configuration
 
-Here are the main configuration fields for the payment method:
+Enter the Monext payment configuration 
 
-![Screenshot showing payment method configuration in backoffice](doc/config.png)
+![Screenshot showing payment main screen configuration in backoffice](doc/config.png)
 
-1. Base
-    * Title
+Here are the main configuration fields for the payments methods (Standard, Installment and Subscription)
 
+1. Set the Monext credentials
+   * Merchant ID
+   * Access key
+   * Environment
+      * Homologation for debug and test purpose.
+      * Production for real payment.
+   * Point of Sales (will be filled after the first save)
+     
+You need to carry out 'pilot' transactions to validate that they are working properly in production.
+
+![Screenshot showing payment global configuration in backoffice](doc/config_access.png)
+
+2. Define specific settings
+   * Payment settings
+   * Contracts
+   * Payment form (allow widget personalization, only for standard payment)
+   
 ![Screenshot showing payment method configuration in backoffice](doc/config_base.png)
 
-2. Acess:
-    * Merchant ID
-    * Access key
-    * Environment
-        * Homologation for debug and test purpose.
-        * Production for real payment.
-        * You need to carry out 'pilot' transactions to validate that they are working properly in production.
-        *
-![Screenshot showing payment method configuration in backoffice](doc/config_access.png)
+![Screenshot showing payment contract configuration in backoffice](doc/config_contract.png)
 
-3. Settings
-    * Payment action
-    * Widget integration mode
-    * Main contract number
-    * Primary contracts (Comma-separated list of your enabled Monext payment contracts that should be used.)
-    * Secondary contracts (Comma-separated list of your enabled Monext payment contracts that should be used.)
-
-![Screenshot showing payment method configuration in backoffice](doc/config_settings.png)
-
+![Screenshot showing payment widget configuration in backoffice](doc/config_widget.png)
 
 ## Additional resources for developers
 

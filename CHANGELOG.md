@@ -1,4 +1,16 @@
 ## Changelog
+### 1.5.7
+* Add compatibility php 8.4 and upgrade php SDK to 25.9
+* Add missing translation for rebranding
+* Add payment description on checkout blocks
+* Disable payment method if no contracts configured
+* Fix new configuration initialization error
+
+#### Environment (Development, QA validation)
+* 
+* WordPress version: 6.8.3
+* WooCommerce version: 9.8.5, 10.2.2
+* php 8.4
 
 ### 1.5.6 - 2025/10/09
 * Embedded Monext widget cart integration
