@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Payline
+ * Plugin Name: Monext
  * Plugin URI: https://docs.payline.com/display/DT/Plugin+WooCommerce
- * Description: integrations of Payline payment solution in your WooCommerce store
+ * Description: integrations of Monext payment solution in your WooCommerce store
  * Version: 1.5.6
  * Author: Monext
  * Text Domain: monext-online-woocommerce
@@ -281,8 +281,8 @@ add_action('admin_menu', 'payline_add_logs_viewer_in_tools_submenu');
 function payline_add_logs_viewer_in_tools_submenu()
 {
 	add_management_page(
-		__('Payline Logs Viewer'),
-		__('Payline Logs Viewer'),
+		__('Monext Logs Viewer'),
+		__('Monext Logs Viewer'),
 		'manage_options',
 		'payline-logs',
 		['PaylineLogsViewer', 'showLogs']

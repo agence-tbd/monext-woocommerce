@@ -20,7 +20,7 @@ class WC_Gateway_Payline_REC extends WC_Abstract_Recurring_Payline_NX {
 
     public $id = 'payline_rec';
 
-    protected $defaultName = 'Payline REC';
+    protected $defaultName = 'Monext REC';
 
     /**
      * Check if the gateway is available for use.

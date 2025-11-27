@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5bd2b19befdfc2d7130899f2456702be",
+    "content-hash": "a523af79dee2e9724f07de6b97e3c9a4",
     "packages": [
         {
             "name": "ddtraceweb/monolog-parser",
@@ -49,17 +49,17 @@
             "time": "2020-07-23T13:38:12+00:00"
         },
         {
-            "name": "monext/payline-sdk",
-            "version": "4.76",
+            "name": "monext/monext-php",
+            "version": "25.9",
             "source": {
                 "type": "git",
-                "url": "https://github.com/PaylineByMonext/payline-php-sdk.git",
-                "reference": "4aa56dd0f63fc0e1b6de0f08da0b099790daa99d"
+                "url": "https://github.com/Monext/monext-php-sdk.git",
+                "reference": "a1f716547efc0f0e74ba3171ffef102236082211"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PaylineByMonext/payline-php-sdk/zipball/4aa56dd0f63fc0e1b6de0f08da0b099790daa99d",
-                "reference": "4aa56dd0f63fc0e1b6de0f08da0b099790daa99d",
+                "url": "https://api.github.com/repos/Monext/monext-php-sdk/zipball/a1f716547efc0f0e74ba3171ffef102236082211",
+                "reference": "a1f716547efc0f0e74ba3171ffef102236082211",
                 "shasum": ""
             },
             "require": {
@@ -83,9 +83,9 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien SUAREZ",
-                    "email": "fabien.suarez@payline.com",
-                    "homepage": "http://www.payline.com"
+                    "name": "Cyrille HEIT",
+                    "email": "cyrille.heit@monext.net",
+                    "homepage": "http://www.monext.net"
                 },
                 {
                     "name": "Vincent Pietri",
@@ -93,13 +93,20 @@
                     "homepage": "https://www.tbdgroup.com/"
                 }
             ],
-            "description": "Payline library for PHP",
+            "description": "Monext PHP Library",
             "keywords": [
                 "Monext",
                 "Payline",
+                "online",
                 "payment"
             ],
-            "time": "2023-10-10T09:30:19+00:00"
+            "support": {
+                "docs": "https://docs.monext.fr/display/DT",
+                "email": "support@payline.com",
+                "issues": "https://github.com/Monext/monext-php-sdk/issues",
+                "source": "https://github.com/Monext/monext-php-sdk/tree/25.9"
+            },
+            "time": "2025-09-19T05:30:08+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -481,10 +488,10 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
-    "platform-dev": [],
+    "platform": {},
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

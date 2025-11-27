@@ -1,3 +1,5 @@
+<?php
+?>
 <style>
     #paylineSettings {
         .payline_settings_hero__container {
@@ -83,13 +85,13 @@
 
 <?php
 $title = [
-    'payline' => 'Settings Payline',
-    'payline_cpt' => 'Standard payment (CPT)',
-    'payline_rec' => 'Installment Payment (REC)',
-    'payline_nx' => 'Subscription payment (NX)',
+    'payline' => __('Common settings', 'payline'),
+    'payline_cpt' => __('Setup Standard payment (CPT)', 'payline'),
+    'payline_rec' => __('Setup Installment Payment (REC)', 'payline'),
+    'payline_nx' => __('Setup Subscription payment (NX)', 'payline'),
 ];
 
-$pageTitle = !empty($title[$section]) ? $title[$section] : '';
+$pageTitle = !empty($section) && !empty($title[$section]) ? $title[$section] : '';
 ?>
 
 <div id="paylineSettings">
@@ -97,17 +99,17 @@ $pageTitle = !empty($title[$section]) ? $title[$section] : '';
         <img src="<?php echo WCPAYLINE_PLUGIN_URL . 'assets/images/logo-monext.svg'?>" alt="Monext" width="250" />
         <h1><?= $pageTitle ?></h1>
         <p>
-            <?php echo "Payline extension v".$this->extensionVersion;?><br/>
-            Developed by <a href="https://www.monext.fr/retail" target="#">Monext</a> for WooCommerce<br/>
-            For any question please contact Payline support<br/>
+            <?php echo "Monext extension v".$this->extensionVersion;?><br/>
+            <?= __('Developed by <a href="https://www.monext.fr/retail" target="#">Monext</a> for WooCommerce', 'payline') ?><br/>
+            <?= __('For any question please contact Monext support', 'payline') ?><br/>
         </p>
 
         <nav>
             <ul>
-                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline') ?>" class=""><?= __('Settings Payline') ?></a></li>
-                <li><a class="<?php if($section === 'payline_cpt'): ?>payline_active_link <?php endif; ?>" href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt') ?>"><?= __('Setup Standard payment (CPT)') ?></a></li>
-                <li><a class="<?php if($section === 'payline_rec'): ?>payline_active_link <?php endif; ?>" href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec') ?>"><?= __('Setup Installment Payment (REC)') ?></a></li>
-                <li><a class="<?php if($section === 'payline_nx'): ?>payline_active_link <?php endif; ?>" href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx') ?>"><?= __('Setup Subscription payment (NX)') ?></a></li>
+                <li><a href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline') ?>" class=""><?= $title['payline'] ?></a></li>
+                <li><a class="<?php if($section === 'payline_cpt'): ?>payline_active_link <?php endif; ?>" href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_cpt') ?>"><?= $title['payline_cpt'] ?></a></li>
+                <li><a class="<?php if($section === 'payline_rec'): ?>payline_active_link <?php endif; ?>" href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_rec') ?>"><?= $title['payline_rec'] ?></a></li>
+                <li><a class="<?php if($section === 'payline_nx'): ?>payline_active_link <?php endif; ?>" href="<?= admin_url('admin.php?page=wc-settings&tab=checkout&section=payline_nx') ?>"><?= $title['payline_nx'] ?></a></li>
             </ul>
         </nav>
     </div>

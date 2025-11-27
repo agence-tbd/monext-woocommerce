@@ -72,6 +72,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
             'title'       => $this->get_setting( 'title' ),
             'description' => $this->get_setting( 'description' ),
             'supports'    => $this->get_supported_features(),
+            'canMakePayment'    => $this->can_make_payment(),
         ], $this->get_payment_method_additionnal_data());
 	}
 
@@ -83,5 +84,16 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
         return [
             'widget_integration' => 'redirection'
         ];
+    }
+
+    /**
+     * @return bool
+     */
+    public function can_make_payment()
+    {
+        if (empty($this->get_setting('primary_contracts'))) {
+            return false;
+        }
+        return true;
     }
 }

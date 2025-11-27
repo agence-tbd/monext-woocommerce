@@ -52,7 +52,7 @@ class ComposerStaticInit89e7d985dd998990b521c4b61d9167fe
         ),
         'Payline\\' => 
         array (
-            0 => __DIR__ . '/..' . '/monext/payline-sdk/src/Payline',
+            0 => __DIR__ . '/..' . '/monext/monext-php/src/Payline',
         ),
         'Monolog\\' => 
         array (

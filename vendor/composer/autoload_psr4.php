@@ -11,6 +11,6 @@ return array(
     'Psr\\SimpleCache\\' => array($vendorDir . '/psr/simple-cache/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
     'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
-    'Payline\\' => array($vendorDir . '/monext/payline-sdk/src/Payline'),
+    'Payline\\' => array($vendorDir . '/monext/monext-php/src/Payline'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
 );

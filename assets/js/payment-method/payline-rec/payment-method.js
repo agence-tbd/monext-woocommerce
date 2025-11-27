@@ -1,7 +1,7 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
-import { __ } from '@wordpress/i18n';
 import { getPaymentMethodData } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
+import { __ } from '@wordpress/i18n';
 import WidgetPayline from "../components/WidgetPayline";
 
 /**
@@ -10,7 +10,7 @@ import WidgetPayline from "../components/WidgetPayline";
 import { PAYMENT_METHOD_NAME } from './constants';
 const settings = getPaymentMethodData( PAYMENT_METHOD_NAME, {} );
 const defaultLabel = __(
-    'Payline REC',
+    'Monext REC',
     'payline'
 );
 const label = decodeEntities( settings?.title || '' ) || defaultLabel;
@@ -18,9 +18,13 @@ const label = decodeEntities( settings?.title || '' ) || defaultLabel;
 /**
  * Content component
  */
-const Content = () => {
+const Content = (props) => {
+
+    const paymentDescription = decodeEntities(settings?.description || '');
+
     return (
-        <WidgetPayline settings={ settings } checkoutContext={props} />
+        <>{ settings.widget_integration === 'redirection' ? <p>{paymentDescription}</p> : <WidgetPayline settings={ settings } checkoutContext={props} /> }</>
+
     );
 };
 
@@ -40,7 +44,7 @@ const paylineRecPaymentMethod = {
     label: <Label />,
     content: <Content />,
     edit: <Content />,
-    canMakePayment: () => true,
+    canMakePayment: () => settings?.canMakePayment,
     ariaLabel: label,
     supports: {
         features: settings?.supports ?? [],
