@@ -30,6 +30,7 @@
 */
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use Automattic\WooCommerce\StoreApi\Utilities\OrderController;
 
 if (!defined('ABSPATH')) exit;
 
@@ -251,6 +252,27 @@ add_action( 'before_woocommerce_init', function() {
 } );
 
 add_action( 'woocommerce_blocks_loaded', 'payline_register_payment_methods' );
+
+/**
+ * Hook method to update draft order as block checkout way
+ * @return void
+ */
+function payline_checkout_update_order_review()
+{
+    $order_id = WC()->session->get( 'store_api_draft_order' );
+    if (!$order_id) {
+        return;
+    }
+
+    $order = wc_get_order( $order_id );
+    if(!$order){
+        WC()->session->__unset('store_api_draft_order');
+        return;
+    }
+
+    (new OrderController())->update_order_from_cart($order);
+}
+add_action('woocommerce_checkout_update_order_review', 'payline_checkout_update_order_review');
 
 /**
  * Register Payline payment methods for Gutenberg blocks

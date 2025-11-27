@@ -36,7 +36,7 @@ class WC_Block_Payline_CPT extends WC_Block_Abstract_Payline {
         {
             /** @var WC_Abstract_Payline $gateway */
             $gateway = new $this->gateway;
-            $gateway->process_scripts();
+            $gateway->processWidgetScripts();
 
             $order_id = null;
             if ( function_exists('WC') && WC()->session && method_exists( WC()->session, 'get' ) ) {

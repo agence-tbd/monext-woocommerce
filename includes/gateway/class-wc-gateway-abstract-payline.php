@@ -358,8 +358,8 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         add_action('woocommerce_api_wc_gateway_' . $this->id, array($this, 'payline_callback'));
         add_action('woocommerce_order_status_changed', array($this, 'captureOnTrigger'), 10, 4 );
 
-        add_action('template_redirect', array($this, 'payline_template_redirect'));
-        add_action('woocommerce_checkout_update_order_review', array($this, 'payline_checkout_update_order_review'));
+        //Used to refresh widget token in classic checkout
+        add_action('woocommerce_before_checkout_form', array($this, 'getNewDraftedOrderId'));
 
         // Hooks use to add token to extend data. Usefull on block checkout update
         add_action('woocommerce_store_api_cart_select_shipping_rate', function() {$this->addTokenToReactObject();});
@@ -445,53 +445,33 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     }
 
     /**
-     * @return void
-     */
-    function payline_template_redirect()
-    {
-        $this->getNewDraftedOrderId();
-    }
-
-    /**
      * Create a draft order on demand. Usefull for widget integration in checkout
      * @return int|null
      * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException
      */
+    public function getCurrentDraftedOrderId()
+    {
+        if(is_admin()) {
+            return null;
+        }
+
+        if ($this->is_available() && is_checkout() && ! is_wc_endpoint_url() && WC()->session) {
+            return WC()->session->get( 'store_api_draft_order');
+        }
+        return null;
+    }
+
     public function getNewDraftedOrderId()
     {
-        if ($this->is_available() && is_checkout() && ! is_wc_endpoint_url() ) {
-            if ( ! WC()->session->get( 'store_api_draft_order' ) ) {
+        if ($this instanceof WC_Gateway_Payline_CPT && $this->is_available() && is_checkout() && ! is_wc_endpoint_url() && WC()->session) {
+            if (! WC()->session->get( 'store_api_draft_order' ) ) {
                 $order = (new OrderController())->create_order_from_cart();
+                $order->calculate_totals();
                 WC()->session->set( 'store_api_draft_order', $order->get_id() );
                 return $order->get_id();
             }
         }
         return null;
-    }
-
-    /**
-     * Hook method to update draft order as block checkout way
-     * @param $post_data
-     * @return void
-     */
-    function payline_checkout_update_order_review($post_data)
-    {
-        if (!$this->is_available()){
-            return;
-        }
-
-        $order_id = WC()->session->get( 'store_api_draft_order' );
-        if (!$order_id) {
-            return;
-        }
-
-        $order = wc_get_order( $order_id );
-        if(!$order){
-            WC()->session->__unset('store_api_draft_order');
-            return;
-        }
-
-        (new OrderController())->update_order_from_cart($order);
     }
 
     /**
@@ -530,20 +510,22 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
      */
     public function extention_data_callback()
     {
-        $orderId = WC()->session->get( 'store_api_draft_order' );
-        $order = wc_get_order($orderId);
+        if($orderId = $this->getCurrentDraftedOrderId()) {
+            $order = wc_get_order($orderId);
 
-        $token = '';
-        if($order) {
-            $token = $this->getCachedDWPDataForOrder($order,'token',true);
-            if (empty($token)) {
-                $token = $this->getNewTokenForOrder($order);
+            $token = '';
+            if($order) {
+                $token = $this->getCachedDWPDataForOrder($order,'token',true);
+                if (empty($token)) {
+                    $token = $this->getNewTokenForOrder($order);
+                }
             }
-        }
 
-        return [
-            self::PAYLINE_EXTEND_WIDGET_TOKEN_KEY => $token,
-        ];
+            return [
+                self::PAYLINE_EXTEND_WIDGET_TOKEN_KEY => $token,
+            ];
+        }
+        return [];
     }
 
 
@@ -553,14 +535,17 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
      */
     function payment_fields()
     {
-        $this->process_scripts();
+        $this->processWidgetScripts();
+
         if (( isset($_GET['wc-ajax']) && $_GET['wc-ajax'] == 'update_order_review' ) &&
             preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match) )
         {
-            $order_id = WC()->session->get( 'store_api_draft_order' );
-            echo $this->getPaylineWidget($order_id, $match);
-            echo '<script>Payline.Api.init();</script>';
-
+            if($order_id = $this->getCurrentDraftedOrderId()) {
+                echo $this->getPaylineWidget($order_id, $match);
+                echo '<script>Payline.Api.init();</script>';
+            } else {
+                echo __('Payment method unavailable');
+            }
         }
 
         if ($this->settings['widget_integration'] === 'redirection') {
@@ -571,8 +556,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     /**
      * @return void
      */
-    public function process_scripts()
+    public function processWidgetScripts()
     {
+        if (is_checkout() && !empty($this->settings['widget_integration']) && ($this->settings['widget_integration'] != 'redirection')) {
         $widgetCustomCss = $this->generateWidgetCustomCss();
         if (!empty($widgetCustomCss)) {
             wp_register_style('payline-custom', false);
@@ -586,18 +572,21 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
             [ 'jquery' ]
         );
 
-        wp_localize_script( 'payline-widget-api', 'paylineData', [
+        if($this instanceof WC_Gateway_Payline_CPT) {
+            wp_localize_script( 'payline-widget-api', 'paylineData', [
             'customizeWidget' => $this->getConfigValueIfExists('widget_settings_customize'),
-            'ctaButton' => $this->getConfigValueIfExists('widget_settings_cta_label'),
-            'textUnderCta' => $this->getConfigValueIfExists('widget_settings_text_under_cta'),
-            'widget_integration' => $this->settings['widget_integration'],
-            'toto'=>'estbo'
-        ]);
+                'customizeWidget' => $this->getConfigValueIfExists('widget_settings_customize'),
+                'ctaButton' => $this->getConfigValueIfExists('widget_settings_cta_label'),
+                'textUnderCta' => $this->getConfigValueIfExists('widget_settings_text_under_cta'),
+                'widget_integration' => $this->settings['widget_integration']
+            ]);
+        }
 
         $widgetJS = ($this->settings['environment'] ==PaylineSDK::ENV_HOMO)?PaylineSDK::HOMO_WDGT_JS:PaylineSDK::PROD_WDGT_JS;
         $widgetCSS = ($this->settings['environment'] ==PaylineSDK::ENV_HOMO)?PaylineSDK::HOMO_WDGT_CSS:PaylineSDK::PROD_WDGT_CSS;
         wp_enqueue_script('widget-min', $widgetJS);
         wp_enqueue_style('widget-min', $widgetCSS);
+        }
     }
 
     /**
@@ -702,6 +691,14 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     protected function getNewTokenForOrder(WC_Order $order)
     {
         $requestParams = $this->getWebPaymentRequest($order);
+        if(empty($requestParams['payment']['amount'])) {
+            new WP_Error(
+                'error',
+                    __('An error occured, cannot retrieve payment amount.', 'payline')
+            );
+            return null;
+        }
+
         $this->debug($requestParams, array(__METHOD__));
 
         $result = $this->paylineSDK()->doWebPayment( $requestParams );
@@ -1075,6 +1072,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
         } elseif ( !$token ) {
             $token = $this->getNewTokenForOrder($order);
             if (empty($token)) {
+
+                return 'Error: Cannot get token for this order.';
+
                 return false;
             }
         }
