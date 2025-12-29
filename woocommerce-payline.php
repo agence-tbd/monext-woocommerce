@@ -399,8 +399,8 @@ function checkVersion()
  * Ajout du wallet dans l'espace mon compte
  * 
  */
-add_action( 'init', array( 'PaylineWallet', 'addWalletEndPoint' ) );
+add_filter('woocommerce_get_query_vars', array( 'PaylineWallet', 'addQueryVars' ) );
 add_filter('woocommerce_account_menu_items', array( 'PaylineWallet', 'addUserAccountMenuItem' ) );
 add_action('woocommerce_account_my-payline-wallet_endpoint', array( 'PaylineWallet', 'getPageContent' ));
-add_filter( 'the_title', array( 'PaylineWallet', 'getPageTitle' ), 11, 1 );
+add_filter('woocommerce_endpoint_my-payline-wallet_title', array('PaylineWallet','getPageTitle'), 42, 2);
 add_action('wp_enqueue_scripts', array( 'PaylineWallet', 'payline_add_front_styles' ));
