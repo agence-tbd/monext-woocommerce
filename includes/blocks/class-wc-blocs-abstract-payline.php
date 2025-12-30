@@ -70,7 +70,7 @@ abstract class WC_Block_Abstract_Payline extends AbstractPaymentMethodType {
     {
         return array_merge([
             'title'       => $this->get_setting( 'title' ),
-            'description' => $this->get_setting( 'description' ),
+            'description' => strip_tags($this->get_setting( 'description' ), '<br>'),
             'supports'    => $this->get_supported_features(),
             'canMakePayment'    => $this->can_make_payment(),
         ], $this->get_payment_method_additionnal_data());

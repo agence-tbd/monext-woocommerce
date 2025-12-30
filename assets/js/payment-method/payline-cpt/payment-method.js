@@ -1,6 +1,7 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getPaymentMethodData } from '@woocommerce/settings';
 import { decodeEntities } from '@wordpress/html-entities';
+import { RawHTML } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import WidgetPayline from '../components/WidgetPayline';
 
@@ -9,7 +10,7 @@ import WidgetPayline from '../components/WidgetPayline';
  */
 import { PAYMENT_METHOD_NAME } from './constants';
 
-const settings = getPaymentMethodData( 'payline_cpt', {} );
+const settings = getPaymentMethodData( PAYMENT_METHOD_NAME, {} );
 const defaultLabel = __(
     'Monext CPT',
     'payline'
@@ -24,8 +25,15 @@ const Content = (props) => {
     const paymentDescription = decodeEntities(settings?.description || '');
 
     return (
-        <>{ settings.widget_integration === 'redirection' ? <p>{paymentDescription}</p> : <WidgetPayline settings={ settings } checkoutContext={props} /> }</>
-        
+        <>
+            <RawHTML>{ paymentDescription }</RawHTML>
+            {settings.widget_integration !== 'redirection' && (
+                <WidgetPayline
+                    settings={settings}
+                    checkoutContext={props}
+                />
+            )}
+        </>
     );
 };
 

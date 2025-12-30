@@ -536,22 +536,19 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     function payment_fields()
     {
         $this->processWidgetScripts();
+        echo "<p>" . strip_tags($this->settings['description'], '<br>') . "</p>";
 
         if (( isset($_GET['wc-ajax']) && $_GET['wc-ajax'] == 'update_order_review' ) &&
-            preg_match('/inshop-(.*)/', $this->settings['widget_integration'],$match) )
-        {
-            if($order_id = $this->getCurrentDraftedOrderId()) {
+            preg_match('/inshop-(.*)/', $this->settings['widget_integration'], $match)) {
+            if ($order_id = $this->getCurrentDraftedOrderId()) {
                 echo $this->getPaylineWidget($order_id, $match);
                 echo '<script>Payline.Api.init();</script>';
             } else {
                 echo __('Payment method unavailable');
             }
         }
-
-        if ($this->settings['widget_integration'] === 'redirection') {
-            echo "<p>" . strip_tags($this->settings['description']) . "</p>";
-        }
     }
+
 
     /**
      * @return void
