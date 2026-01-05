@@ -55,6 +55,19 @@ function woocommerce_payline_activation() {
 }
 register_activation_hook(__FILE__, 'woocommerce_payline_activation');
 
+function woocommerce_payline_desactivation() {
+    delete_option('woocommerce_payline_settings');
+    delete_option('woocommerce_payline_pos_list');
+    delete_option('wc_payline_version');
+    delete_option('woocommerce_payline_pos_contracts_list');
+    delete_option('woocommerce_payline_cpt_settings');
+    delete_option('woocommerce_payline_rec_settings');
+    delete_option('woocommerce_payline_nx_settings');
+
+    flush_rewrite_rules();
+}
+register_deactivation_hook(__FILE__, 'woocommerce_payline_desactivation');
+
 
 /**
  * inserts class gateway
