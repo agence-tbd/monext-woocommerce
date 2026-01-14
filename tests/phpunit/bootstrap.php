@@ -53,7 +53,7 @@ if (!function_exists('get_plugins')) {
                     'Woo' => '',
                     'Name' => 'Payline',
                     'PluginURI' => 'https://docs.payline.com/display/DT/Plugin+WooCommerce',
-                    'Version' => '1.5.6',
+                    'Version' => '1.5.8',
                     'Description' => 'integrations of Payline payment solution in your WooCommerce store',
                     'Author' => 'Monext',
                     'AuthorURI' => 'http://www.monext.fr',
@@ -99,7 +99,7 @@ if (!function_exists('get_plugin_data')) {
         return [
             'Name' => 'Payline',
             'PluginURI' => 'https://docs.payline.com/display/DT/Plugin+WooCommerce',
-            'Version' => '1.5.6',
+            'Version' => '1.5.8',
             'Description' => 'integrations of Payline payment solution in your WooCommerce store',
             'Author' => 'Monext',
             'AuthorURI' => 'http://www.monext.fr',

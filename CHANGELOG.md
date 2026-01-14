@@ -1,4 +1,20 @@
 ## Changelog
+
+### 1.5.8
+* Fix redirection on classic checkout
+* Fix error on get_the_title, fix #21
+* Remove configuration on module deactivation
+* Change personalization configuration for CTA hover
+* Add missing description on payment in checkout
+* Add phpunit tests
+
+#### Environment (Development, QA validation)
+*
+* WordPress version: 6.8.3
+* WooCommerce version: 9.8.5, 10.2.2
+* php 8.4
+
+
 ### 1.5.7
 * Add compatibility php 8.4 and upgrade php SDK to 25.9
 * Add missing translation for rebranding
