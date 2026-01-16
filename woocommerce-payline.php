@@ -3,7 +3,7 @@
  * Plugin Name: Monext
  * Plugin URI: https://docs.payline.com/display/DT/Plugin+WooCommerce
  * Description: integrations of Monext payment solution in your WooCommerce store
- * Version: 1.5.6
+ * Version: 1.5.8
  * Author: Monext
  * Text Domain: monext-online-woocommerce
  * Author URI: http://www.monext.fr
@@ -30,17 +30,14 @@
 */
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use Automattic\WooCommerce\StoreApi\Utilities\OrderController;
 
 if (!defined('ABSPATH')) exit;
-
-//To update for each new script migration
-if ( ! defined( 'WCPAYLINE_UPGRADE_VERSION' ) ) {
-    define( 'WCPAYLINE_UPGRADE_VERSION', '1.5.6' );
-}
 
 define('WCPAYLINE_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WCPAYLINE_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WCPAYLINE_PLUGIN_CLASS', plugin_basename(__FILE__));
+define('WCPAYLINE_PLUGIN_VERSION', '1.5.8');
 
 //require_once plugin_dir_path(__FILE__) . 'includes/admin/payline-logs-viewer.php';
 
@@ -57,6 +54,19 @@ function woocommerce_payline_activation() {
     flush_rewrite_rules();
 }
 register_activation_hook(__FILE__, 'woocommerce_payline_activation');
+
+function woocommerce_payline_desactivation() {
+    delete_option('woocommerce_payline_settings');
+    delete_option('woocommerce_payline_pos_list');
+    delete_option('wc_payline_version');
+    delete_option('woocommerce_payline_pos_contracts_list');
+    delete_option('woocommerce_payline_cpt_settings');
+    delete_option('woocommerce_payline_rec_settings');
+    delete_option('woocommerce_payline_nx_settings');
+
+    flush_rewrite_rules();
+}
+register_deactivation_hook(__FILE__, 'woocommerce_payline_desactivation');
 
 
 /**
@@ -253,6 +263,27 @@ add_action( 'before_woocommerce_init', function() {
 add_action( 'woocommerce_blocks_loaded', 'payline_register_payment_methods' );
 
 /**
+ * Hook method to update draft order as block checkout way
+ * @return void
+ */
+function payline_checkout_update_order_review()
+{
+    $order_id = WC()->session->get( 'store_api_draft_order' );
+    if (!$order_id) {
+        return;
+    }
+
+    $order = wc_get_order( $order_id );
+    if(!$order){
+        WC()->session->__unset('store_api_draft_order');
+        return;
+    }
+
+    (new OrderController())->update_order_from_cart($order);
+}
+add_action('woocommerce_checkout_update_order_review', 'payline_checkout_update_order_review');
+
+/**
  * Register Payline payment methods for Gutenberg blocks
  *
  * @return void
@@ -377,8 +408,8 @@ function checkVersion()
  * Ajout du wallet dans l'espace mon compte
  * 
  */
-add_action( 'init', array( 'PaylineWallet', 'addWalletEndPoint' ) );
+add_filter('woocommerce_get_query_vars', array( 'PaylineWallet', 'addQueryVars' ) );
 add_filter('woocommerce_account_menu_items', array( 'PaylineWallet', 'addUserAccountMenuItem' ) );
 add_action('woocommerce_account_my-payline-wallet_endpoint', array( 'PaylineWallet', 'getPageContent' ));
-add_filter( 'the_title', array( 'PaylineWallet', 'getPageTitle' ), 11, 1 );
+add_filter('woocommerce_endpoint_my-payline-wallet_title', array('PaylineWallet','getPageTitle'), 42, 2);
 add_action('wp_enqueue_scripts', array( 'PaylineWallet', 'payline_add_front_styles' ));

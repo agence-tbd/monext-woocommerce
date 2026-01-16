@@ -26,14 +26,10 @@ class PaylineWallet {
         return $settings['environment'] ?? null;
     }
 
-    /**
-     * @return void
-     */
-    public static function addWalletEndPoint()
+    public static function addQueryVars($vars)
     {
-        if (self::isWalletEnabled()) {
-            add_rewrite_endpoint(self::$endPoint, EP_PAGES);
-        }
+        $vars[self::$endPoint] = self::$endPoint;
+        return $vars;
     }
 
     /**
@@ -101,9 +97,9 @@ class PaylineWallet {
      * @param $title
      * @return string
      */
-    public static function getPageTitle($title)
+    public static function getPageTitle($title, $endpoint)
     {
-        if (self::is_wallet_endpoint_url() && in_the_loop()) {
+        if (self::is_wallet_endpoint_url() && $endpoint == self::$endPoint && in_the_loop()) {
             $title = __('My Wallet', 'monext-online-woocommerce');
         }
 

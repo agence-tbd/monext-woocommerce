@@ -246,24 +246,24 @@ class WC_Gateway_Payline_CPT extends WC_Abstract_Payline {
         );
 
         $pcRangeOptions = range(10, 30, 10);
-        $rangeOptions = [
-            '' => __('Monext default', 'payline'),
-        ];
+        $pcRangeOptions = array_reverse($pcRangeOptions);
+        $rangeOptions = [];
         foreach ($pcRangeOptions AS $value) {
-            $rangeOptions[$value] = $value . ' %';
+            $rangeOptions['-' . $value] = $value . ' % ' . __(' darker', 'payline');
         }
 
-        $this->form_fields['widget_settings_css_cta_bg_color_hover_darker'] = array(
-            'title' => __('CTA hover darkey', 'payline'),
-            'type' => 'select',
-            'default' => __('', 'payline'),
-            'options' => $rangeOptions
-        );
+        $rangeOptions[''] = __('No change', 'payline');
 
-        $this->form_fields['widget_settings_css_cta_bg_color_hover_lighter'] = array(
-            'title' => __('CTA hover lighter', 'payline'),
+        $pcRangeOptions = array_reverse($pcRangeOptions);
+
+        foreach ($pcRangeOptions AS $value) {
+            $rangeOptions[$value] = $value . ' % ' . __(' lighter', 'payline');
+        }
+
+        $this->form_fields['widget_settings_css_cta_bg_color_hover'] = array(
+            'title' => __('CTA hover', 'payline'),
             'type' => 'select',
-            'default' => __('', 'payline'),
+            'default' => '-20',
             'options' => $rangeOptions
         );
 

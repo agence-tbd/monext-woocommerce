@@ -20,9 +20,9 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-0: *.js\n"
 "X-Loco-Version: 2.6.7; wp-6.4.3-alpha-57183\n"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1604
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1608
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1618
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1613
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1617
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1627
 #, php-format
 msgid "%s is mandatory"
 msgstr "%s est obligatoire"
@@ -31,7 +31,7 @@ msgstr "%s est obligatoire"
 msgid "A transaction every two years"
 msgstr "Une échéances tous les deux ans"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1608
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1617
 msgid "Access Key"
 msgstr "Clé d'accès"
 
@@ -43,8 +43,8 @@ msgstr "Clé d'accès"
 msgid "All"
 msgstr "Tout"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:718
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1177
+#: includes/gateway/class-wc-gateway-abstract-payline.php:727
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1186
 #, php-format
 msgid "An error occured while displaying the payment form (error code %s : %s). Please contact us."
 msgstr "Une erreur s'est produite lors de l'affichage du formulaire de paiement (code d'erreur %s : %s). Veuillez nous contactez."
@@ -65,7 +65,7 @@ msgstr "Sur la base de navigateur"
 msgid "Billing left"
 msgstr "Nombre d'échéances"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1194
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1203
 msgid "Cancel payment"
 msgstr "Annuler le paiement"
 
@@ -154,7 +154,7 @@ msgstr "Utilisateur"
 msgid "Maximum records"
 msgstr "Nombre maximum d'échéances"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1604
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1613
 #: includes/gateway/class-wc-gateway-payline.php:94
 msgid "Merchant ID"
 msgstr "Identifiant Monext"
@@ -206,7 +206,7 @@ msgstr "Mot de passe utilisé pour appeler les services web %s (disponible dans 
 msgid "Payed order status"
 msgstr "Statut commande payée"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1120
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1129
 msgid "Payment"
 msgstr "Paiement"
 
@@ -219,8 +219,8 @@ msgid "Payment frequencies"
 msgstr "Fréquence des échéances"
 
 #: includes/gateway/class-wc-gateway-abstract-payline.php:309
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1417
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1418
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1426
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1427
 msgid "Payment in progress"
 msgstr "Paiement en cours"
 
@@ -247,7 +247,7 @@ msgstr "Contrats primaires"
 msgid "Production"
 msgstr "Production"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1633
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1642
 msgid "PROXY SETTINGS"
 msgstr "PARAMETRES PROXY"
 
@@ -264,16 +264,16 @@ msgstr "Nombre d'échéances. Champs obligatoire"
 msgid "Redirection mode"
 msgstr "Mode Redirection"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1501
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1510
 msgid "Refund failed."
 msgstr "Remboursement en erreur"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1523
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1532
 #, php-format
 msgid "Refunded %1$s - Refund ID: %2$s"
 msgstr "Remboursement de %1$s - Transaction ID: %2$s"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1645
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1654
 msgid "Reset configuration"
 msgstr "Réinitialiser la configuration"
 
@@ -296,11 +296,11 @@ msgstr "Statut"
 msgid "Target environment"
 msgstr "Environnement cible"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1599
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1608
 msgid "The SOAP extension is not enabled in your PHP installation and is required"
 msgstr "L'extension php SOAP est requise mais n'est pas active "
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1454
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1463
 msgid "There was a error processing your payment."
 msgstr "Une erreur s'est produite durant le paiement."
 
@@ -319,7 +319,7 @@ msgstr "Libellé sous lequel le paiement via Payline est proposé à l’acheteu
 msgid "Title"
 msgstr "Titre"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1369
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1378
 #, php-format
 msgid "Token %s does not match expected %s for order %s"
 msgstr "Le token %s ne correspond pas à  %s for order %s"
@@ -336,7 +336,7 @@ msgstr "Type de transaction créée après un paiement"
 msgid "Wallet"
 msgstr "Portefeuille"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1627
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1636
 msgid "You are in homologation mode, payments are simulated !"
 msgstr "Vous êtes en mode de test, les paiements sont simulés!"
 
@@ -346,7 +346,7 @@ msgstr "Vous êtes en mode de test, les paiements sont simulés!"
 msgid "You will be redirected on %s secured pages at the end of your order."
 msgstr "Vous allez être redirigé sur les pages sécurisées de %s à la fin de votre commande."
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1593
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1602
 #, php-format
 msgid "Your %s configuration parameters are reset."
 msgstr "Les paramètres de configuration de votre %s sont réinitialisés."
@@ -355,17 +355,17 @@ msgstr "Les paramètres de configuration de votre %s sont réinitialisés."
 msgid "Payment on hold"
 msgstr "Paiement en attente"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:645
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1217
+#: includes/gateway/class-wc-gateway-abstract-payline.php:654
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1226
 #, php-format
 msgid "You can't be redirected to payment page (error code %s : %s). Please contact us."
 msgstr "Vous ne pouvez pas être redirigé vers la page de paiement (code d'erreur %s : %s). Veuillez nous contacter."
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1251
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1260
 msgid "Payment was canceled."
 msgstr "Le paiement a été annulé."
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1253
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1262
 msgid "Payment cannot be canceled now. Please contact us."
 msgstr "Le paiement ne peut pas être annulé maintenant. Veuillez nous contacter."
 
@@ -419,11 +419,11 @@ msgstr "Votre paiement a été annulé"
 msgid "Your payment is in error"
 msgstr "Votre paiement est en erreur"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1613
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1622
 msgid "Please select at least one contract in contracts tab"
 msgstr "Veuillez sélectionner au moins un contrat dans l’onglet Contrats"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1618
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1627
 #: includes/gateway/class-wc-gateway-payline.php:117
 msgid "Point of Sales"
 msgstr "Point de vente"
@@ -556,7 +556,7 @@ msgstr "Veuillez choisir un point de vente pour obtenir les contrats"
 msgid "Settings"
 msgstr "Paramètres"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1697
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1706
 #, php-format
 msgid "When order status is \"%s\""
 msgstr "Quand le status de la commande est \"%s\""
@@ -635,25 +635,25 @@ msgstr "intégrations de solution de paiement Monext dans votre magasin de WooCo
 msgid "Pay via Monext"
 msgstr "Payer avec Monext"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1415
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1424
 msgid "Fraud alert. See details in Monext administration center"
 msgstr "Alerte sur tentative de fraudeVoir les détail dans le centre d'administration de Payline"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1625
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1634
 msgid "Your settings is correct, connexion with Monext is established"
 msgstr "Vos paramètres sont corrects, connexion avec Monext établie"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1631
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1633
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1640
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1642
 #, php-format
 msgid "Unable to connect to Monext, check your %s"
 msgstr "Impossible de se connecter à Monext, vérifiez votre%s"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1631
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1640
 msgid "MONEXT GATEWAY ACCESS"
 msgstr "ACCES PASSERELLE ACCESS"
 
-#: includes/gateway/class-wc-gateway-abstract-payline.php:1635
+#: includes/gateway/class-wc-gateway-abstract-payline.php:1644
 #, php-format
 msgid "Unable to connect to Monext (code %s : %s)"
 msgstr "Impossible de se connecter à Monext (Code%s:%s)"
@@ -756,3 +756,7 @@ msgstr "Messages d'erreur"
 #: includes/gateway/views/backend/settings/payline.php:97
 msgid "Proxy setting"
 msgstr "Paramètres Proxy"
+
+#: includes/gateway/class-wc-gateway-abstract-payline.php:570
+msgid "Payment method unavailable"
+msgstr "Methode de payment non disponible"
