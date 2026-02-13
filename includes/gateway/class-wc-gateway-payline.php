@@ -96,9 +96,8 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
         );
         $fields['access_key'] = array(
             'title' => __('Access key', 'payline'),
-            'type' => 'text',
-            'default' => '',
-            'description' => sprintf(__( 'Password used to call %s web services (available in the %s administration center)', 'payline'), 'Monext', 'Monext')
+            'type' => 'obfuscated_field',
+            'desc' => sprintf(__( 'Password used to call %s web services (available in the %s administration center)', 'payline'), 'Monext', 'Monext')
         );
         $fields['environment'] = array(
             'title' => __('Target environment', 'payline'),
@@ -120,6 +119,30 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
 
         return $fields;
     }
+
+    /**
+	 * Generate Obfuscated Input HTML.
+	 *
+	 * @param string $key Field key.
+	 * @param array  $data Field data.
+	 * @since  1.0.0
+	 * @return string
+	 */
+	public function generate_obfuscated_field_html( $key, $data ) {
+		$field_key = $this->get_field_key( $key );
+        $clearValue = isset($this->settings[$key]) ? $this->settings[$key] : '';
+        
+        $data['value'] = $this->getObfuctatedValue($clearValue);
+        $data['type'] = 'text';
+        $data['field_name'] = $field_key;
+        $data['id'] = $field_key;
+
+		ob_start();
+		
+        WC_Admin_Settings::output_fields( [$data] );
+        
+		return ob_get_clean();
+	}
 
     /**
      * Function use in template to get Advanced settings part
@@ -249,6 +272,21 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
     }
 
     /**
+     * Validation personnalisée pour access_key.
+     */
+    public function validate_access_key_field($key, $value)
+    {
+        $originalValues = get_option($this->get_option_key(), []);
+        $originalAccessKey = isset($originalValues['access_key']) ? $originalValues['access_key'] : '';
+
+        // Si la valeur est obfusquée, on ne sauvegarde pas (on garde l'ancienne)
+        if ($value === $this->getObfuctatedValue($originalAccessKey)) {
+            return $originalAccessKey;
+        }
+        return $value;
+    }
+
+    /**
      * Return a list of Point Of Sales for Payline global settings
      * @return false|mixed|null
      */
@@ -325,6 +363,18 @@ class WC_Gateway_Payline extends WC_Abstract_Payline {
     protected function paylineSuccessWebPaymentDetails(WC_Order $order, array $res)
     {
         return false;
+    }
+
+    protected function getObfuctatedValue($value, $nbToShow = 3)
+    {
+        if (!empty($value)) {
+            $length = strlen($value);
+            if ($length > $nbToShow) {
+                $value = str_repeat('*', $length - $nbToShow) . substr($value, -$nbToShow);
+            }
+            return $value;
+        }
+        return $value;
     }
 
 }
