@@ -284,6 +284,30 @@ function payline_checkout_update_order_review()
 add_action('woocommerce_checkout_update_order_review', 'payline_checkout_update_order_review');
 
 /**
+ * Reuse the existing draft order in classic checkout instead of creating a new one.
+ *
+ * @param int|null    $order_id Existing order ID to use, or null to let WooCommerce create one.
+ * @param WC_Checkout $checkout
+ * @return int|null
+ */
+function payline_reuse_draft_order_for_classic_checkout( $order_id, $checkout )
+{
+    $draft_order_id = WC()->session->get( 'store_api_draft_order' );
+    if ( ! $draft_order_id ) {
+        return $order_id;
+    }
+
+    $order = wc_get_order( $draft_order_id );
+    if ( ! $order || $order->get_status() !== 'checkout-draft' ) {
+        WC()->session->__unset( 'store_api_draft_order' );
+        return $order_id;
+    }
+
+    return $draft_order_id;
+}
+add_filter( 'woocommerce_create_order', 'payline_reuse_draft_order_for_classic_checkout', 10, 2 );
+
+/**
  * Register Payline payment methods for Gutenberg blocks
  *
  * @return void
