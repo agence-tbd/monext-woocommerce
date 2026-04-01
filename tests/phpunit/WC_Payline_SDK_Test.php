@@ -57,7 +57,7 @@ class WC_Payline_SDK_Test extends TestCase
         $ref->setAccessible(true);
 
         $version = $ref->invoke(null);
-        $this->assertEquals('1.5.8', $version);
+        $this->assertEquals('1.5.9', $version);
     }
 
     // -------------------------------
