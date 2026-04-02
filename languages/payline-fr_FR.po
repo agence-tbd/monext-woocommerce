@@ -656,7 +656,7 @@ msgstr "ACCES PASSERELLE ACCESS"
 #: includes/gateway/class-wc-gateway-abstract-payline.php:1644
 #, php-format
 msgid "Unable to connect to Monext (code %s : %s)"
-msgstr "Impossible de se connecter à Monext (Code%s:%s)"
+msgstr "Impossible de se connecter à Monext (Code %s : %s)"
 
 #: includes/gateway/class-wc-gateway-payline-cpt.php:231
 #: includes/gateway/class-wc-gateway-payline-cpt.php:250

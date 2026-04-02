@@ -1,5 +1,16 @@
 ## Changelog
 
+### 1.5.9
+* Reuse draft_order_id in checkout
+* Add control on order exists when retrieving token
+* Obfuscation of the secret_key field in the configuration
+* Add missing Symfony\Component\Cache
+
+#### Environment (Development, QA validation)
+* WordPress version: 6.8.3
+* WooCommerce version: 9.8.5, 10.2.2
+* php 8.4
+
 ### 1.5.8
 * Fix redirection on classic checkout
 * Fix error on get_the_title, fix #21

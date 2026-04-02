@@ -1061,6 +1061,9 @@ abstract class WC_Abstract_Payline extends WC_Payment_Gateway {
     public function getPaylineWidget($orderId, $match = null)
     {
         $order = wc_get_order($orderId);
+        if(empty($orderId) || empty($order)){
+            return 'Error: Cannot get token for this order.';
+        }
         $token = $this->getCachedDWPDataForOrder($order, 'token', true);
 
         // Prevent to send the request again on refresh.
